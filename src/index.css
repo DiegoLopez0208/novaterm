@@ -1,0 +1,1273 @@
+/* NovaTerm — el chrome esta hecho del mismo material que la terminal: la misma
+   fuente monoespaciada, la misma paleta, y medidas que respetan la celda. Los
+   colores llegan como variables desde App.tsx, derivados del tema activo. */
+
+/* Nova Mono: build propio de Iosevka (OFL 1.1, sin Reserved Font Name), la
+   unica fuente que la app garantiza. Sin esto la lista de Ajustes dependia
+   entera de lo que hubiera instalado en la maquina, y el default caia a
+   Consolas, que no tiene un solo glifo Nerd Font. */
+@font-face {
+  font-family: 'Nova Mono';
+  src: url('./assets/fonts/NovaMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  /* block y no swap: con swap se ve el cambio de fuente y, peor, xterm mide la
+     celda con la equivocada. */
+  font-display: block;
+}
+@font-face {
+  font-family: 'Nova Mono';
+  src: url('./assets/fonts/NovaMono-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'Nova Mono';
+  src: url('./assets/fonts/NovaMono-Italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: block;
+}
+@font-face {
+  font-family: 'Nova Mono';
+  src: url('./assets/fonts/NovaMono-BoldItalic.woff2') format('woff2');
+  font-weight: 700;
+  font-style: italic;
+  font-display: block;
+}
+
+/* Los glifos de Powerline, Starship y devicons, como ultimo recurso de toda
+   cadena de fuentes: asi cualquier familia que elijas —incluidas las del
+   sistema— dibuja bien un prompt con Nerd Font sin tener que parchearla. La
+   variante Mono respeta el ancho de celda. */
+@font-face {
+  font-family: 'Simbolos Nova';
+  src: url('./assets/fonts/SymbolsNerdFontMono-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+:root {
+  --fondo: #0d0f18;
+  --tinta: #d8dee9;
+  --tenue: #6b7089;
+  --acento: #84a0c6;
+  --linea: rgba(216, 222, 233, 0.1);
+  --realce: rgba(216, 222, 233, 0.07);
+  --chrome: rgba(13, 15, 24, 0.85);
+  --fuente: 'Nova Mono', 'JetBrainsMono Nerd Font', Consolas, 'Simbolos Nova', monospace;
+  --pad: 12px;
+  --barra: 30px;
+
+  color-scheme: dark;
+  font-family: var(--fuente);
+  font-size: 12px;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  /* Transparente de punta a punta: el unico color de fondo lo pone xterm con su
+     alpha. Si el webview pintara opaco, taparia el acrilico de la ventana. */
+  background: transparent;
+  color: var(--tinta);
+}
+
+body {
+  user-select: none;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+:focus-visible {
+  outline: 1px solid var(--acento);
+  outline-offset: 1px;
+}
+
+/* Una sola superficie para toda la ventana: barra, terminal y estado comparten
+   el mismo fondo translucido. El redondeo acompaña al que Windows le pone a la
+   ventana, para que no asome una esquina cuadrada por debajo. */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--lienzo);
+  border-radius: 8px;
+  overflow: hidden;
+  /* Borde por dentro: con `border` el contenido se correria un pixel al
+     aplicarlo, y la sombra interior no ocupa espacio de layout. */
+  box-shadow: inset 0 0 0 1px var(--borde);
+}
+
+/* Barra superior ------------------------------------------------------- */
+
+.barra {
+  flex: 0 0 auto;
+  background: var(--chrome);
+  border-bottom: 1px solid var(--linea);
+}
+
+.barra-fila {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: var(--barra);
+  padding-left: 11px;
+}
+
+.marca {
+  color: var(--acento);
+  flex: 0 0 auto;
+}
+
+.marca-texto {
+  color: var(--tinta);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+}
+
+.punto {
+  color: var(--tenue);
+  opacity: 0.55;
+}
+
+.proceso {
+  color: var(--tenue);
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empuje {
+  flex: 1;
+  align-self: stretch;
+}
+
+.accion {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 22px;
+  margin-right: 4px;
+  background: none;
+  border: 0;
+  border-radius: 4px;
+  color: var(--tenue);
+  cursor: pointer;
+  transition: color 0.1s, background 0.1s;
+}
+
+.accion:hover {
+  color: var(--tinta);
+  background: var(--realce);
+}
+
+/* Controles de ventana propios: la barra nativa de Windows rompia la ilusion
+   de una sola pieza. */
+.ventana-controles {
+  display: flex;
+  align-self: stretch;
+}
+
+.ventana-controles button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  background: none;
+  border: 0;
+  color: var(--tenue);
+  cursor: pointer;
+  transition: color 0.1s, background 0.1s;
+}
+
+.ventana-controles button:hover {
+  color: var(--tinta);
+  background: var(--realce);
+}
+
+.ventana-controles .cerrar:hover {
+  background: #e2545a;
+  color: #fff;
+}
+
+/* La firma: los 16 colores ANSI del tema, a lo ancho de la ventana. */
+.tira {
+  display: flex;
+  width: 100%;
+  height: 3px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 0.14s, height 0.14s;
+}
+
+.tira:hover {
+  opacity: 1;
+  height: 5px;
+}
+
+.tira i {
+  flex: 1;
+}
+
+.aviso {
+  flex: 0 0 auto;
+  padding: 5px 12px;
+  font-size: 11px;
+  color: #e27878;
+  background: rgba(226, 120, 120, 0.1);
+  border-bottom: 1px solid rgba(226, 120, 120, 0.25);
+}
+
+/* Pestañas -------------------------------------------------------------- */
+
+.pestanas {
+  display: flex;
+  align-items: stretch;
+  gap: 1px;
+  flex: 0 0 auto;
+  height: 28px;
+  padding: 0 6px;
+  background: var(--chrome);
+  border-bottom: 1px solid var(--linea);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.pestana {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 6px 0 10px;
+  min-width: 96px;
+  max-width: 220px;
+  color: var(--tenue);
+  font-size: 11.5px;
+  cursor: default;
+  border-bottom: 2px solid transparent;
+  transition: color 0.1s, background 0.1s;
+}
+
+.pestana:hover {
+  color: var(--tinta);
+  background: var(--realce);
+}
+
+.pestana.activa {
+  color: var(--tinta);
+  background: var(--realce);
+  border-bottom-color: var(--acento);
+}
+
+/* El icono del shell: no se encoge cuando la pestaña se angosta, y va mas
+   apagado que el texto para no competir con el. */
+.pestana > svg {
+  flex: none;
+  opacity: 0.6;
+}
+
+.pestana.activa > svg {
+  opacity: 0.95;
+  color: var(--acento);
+}
+
+.pestana .etiqueta {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Cuantos paneles tiene la pestaña. Solo aparece si hay mas de uno: si no,
+   seria un "1" en todas y no diria nada. */
+.pestana .paneles {
+  font-size: 9.5px;
+  padding: 1px 4px;
+  border-radius: 2px;
+  background: var(--realce);
+  color: var(--tenue);
+}
+
+/* Antes eran los caracteres × y +, dibujados por la fuente activa: cambiaban de
+   peso y de alineacion con cada familia. Ahora son SVG, y el centrado lo hace
+   la grilla en vez del interlineado. */
+.pestana .cerrar-pestana,
+.nueva-pestana {
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  color: var(--tenue);
+  line-height: 1;
+  padding: 3px 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.pestana .cerrar-pestana:hover,
+.nueva-pestana:hover {
+  opacity: 1;
+  color: var(--tinta);
+  background: var(--realce);
+}
+
+.nueva-pestana {
+  align-self: center;
+  margin-left: 4px;
+}
+
+.nombre-pestana {
+  width: 100%;
+  background: var(--fondo);
+  border: 1px solid var(--acento);
+  border-radius: 2px;
+  color: var(--tinta);
+  font: inherit;
+  padding: 2px 4px;
+  outline: none;
+}
+
+/* Paneles ---------------------------------------------------------------- */
+
+/* El margen interno es aire de la terminal, no un hueco: el fondo sigue siendo
+   el mismo del lienzo, asi que el texto respira contra el borde en vez de
+   quedar pegado. */
+.workspace {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: var(--pad);
+}
+
+.lienzo {
+  position: absolute;
+  inset: var(--pad);
+}
+
+/* Las pestañas inactivas siguen montadas para no perder su PTY, pero no deben
+   robar clicks ni foco. */
+.lienzo.oculto {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Los paneles se posicionan en una capa plana en vez de anidarse: asi ninguna
+   terminal cambia de padre al dividir otra, y no se remonta. */
+.lienzo-paneles {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.panel {
+  position: absolute;
+  overflow: hidden;
+  /* Aire entre el borde del panel y el texto. Sin esto el recuadro del panel
+     activo queda apoyado contra las letras de la primera columna. Va en el
+     panel y no en el host de xterm, que mide su grilla con el tamaño del
+     contenedor. */
+  padding: 2px 7px;
+}
+
+/* Solo el panel activo lleva marca, y solo cuando hay mas de uno. Del lado de
+   adentro para no correr el contenido al cambiar de panel. */
+.divididos .panel.activo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--acento);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.separador-panel {
+  position: absolute;
+  z-index: 3;
+  background: var(--linea);
+  background-clip: padding-box;
+  transition: background 0.1s;
+}
+
+/* La linea mide 1 px pero la zona agarrable se extiende a los costados: si no,
+   acertarle con el mouse es una loteria. */
+.separador-panel.vertical {
+  width: 1px;
+  cursor: col-resize;
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  margin-left: -3px;
+}
+
+.separador-panel.horizontal {
+  height: 1px;
+  cursor: row-resize;
+  border-top: 3px solid transparent;
+  border-bottom: 3px solid transparent;
+  margin-top: -3px;
+}
+
+.separador-panel:hover {
+  background: var(--acento);
+}
+
+/* Mientras se arrastra, el cursor no debe cambiar al pasar sobre la terminal
+   ni debe seleccionarse texto. */
+body.redimensionando * {
+  pointer-events: none;
+  user-select: none;
+}
+
+.terminal-host {
+  width: 100%;
+  height: 100%;
+}
+
+.terminal-host .xterm {
+  height: 100%;
+  outline: none;
+  /* El interruptor de ligaduras de Ajustes guardaba el valor y no lo aplicaba a
+     nada. Con el renderer del DOM las resuelve el navegador sobre los tramos de
+     texto que arma xterm, asi que se decide desde aca. */
+  font-variant-ligatures: var(--ligaduras, none);
+}
+
+.terminal-host .xterm-viewport {
+  background: transparent !important;
+  scrollbar-width: thin;
+  scrollbar-color: var(--linea) transparent;
+}
+
+/* Separa los botones de paneles de los de ventana, para que no se lean como
+   un solo grupo. */
+.division-barra {
+  width: 1px;
+  height: 14px;
+  margin: 0 5px 0 3px;
+  background: var(--linea);
+}
+
+/* Menu de clic derecho sobre la terminal -------------------------------- */
+
+.menu-panel {
+  position: fixed;
+  z-index: 9;
+  min-width: 205px;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--fondo);
+  border: 1px solid var(--linea);
+  border-radius: 4px;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.5);
+}
+
+.menu-panel button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 5px 8px;
+  background: none;
+  border: 0;
+  border-radius: 3px;
+  color: var(--tinta);
+  font-size: 11.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu-panel button:hover {
+  background: var(--realce);
+}
+
+.menu-panel kbd {
+  font: inherit;
+  font-size: 10px;
+  color: var(--tenue);
+}
+
+.separador-menu {
+  height: 1px;
+  margin: 4px 2px;
+  background: var(--linea);
+}
+
+/* Menu de perfiles ------------------------------------------------------ */
+
+.nueva-envoltorio {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.desplegar-perfiles {
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  color: var(--tenue);
+  padding: 3px;
+  border-radius: 3px;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.desplegar-perfiles:hover {
+  opacity: 1;
+  color: var(--tinta);
+  background: var(--realce);
+}
+
+.menu-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+}
+
+.menu-perfiles {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 9;
+  min-width: 190px;
+  margin: 4px 0 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--fondo);
+  border: 1px solid var(--linea);
+  border-radius: 4px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+}
+
+.menu-perfiles button {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 8px;
+  background: none;
+  border: 0;
+  border-radius: 3px;
+  color: var(--tinta);
+  font-size: 11.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu-perfiles button:hover {
+  background: var(--realce);
+}
+
+.menu-perfiles em {
+  font-style: normal;
+  font-size: 9.5px;
+  color: var(--tenue);
+  /* El "propio" se va al borde derecho ahora que el icono manda a la izquierda. */
+  margin-left: auto;
+}
+
+.menu-perfiles button svg {
+  flex: none;
+  opacity: 0.75;
+}
+
+/* Buscar en la terminal (Ctrl+Shift+F) ---------------------------------- */
+
+.busqueda {
+  position: absolute;
+  top: 6px;
+  right: 12px;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--linea);
+  border-radius: 7px;
+  background: var(--chrome);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.busqueda input {
+  width: 170px;
+  padding: 3px 6px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: var(--realce);
+  color: var(--tinta);
+  font: inherit;
+  font-size: 11.5px;
+  outline: none;
+}
+
+.busqueda input:focus {
+  border-color: var(--acento);
+}
+
+/* Sin resultados se avisa con el color, no con un cartel: la barra mide 40 px
+   de alto y un mensaje la desarmaria. */
+.busqueda input.sin-resultados {
+  border-color: var(--acento);
+  color: var(--tenue);
+}
+
+.busqueda button {
+  padding: 2px 6px;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  color: var(--tenue);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.busqueda button:hover {
+  background: var(--realce);
+  color: var(--tinta);
+}
+
+/* Paleta de comandos ---------------------------------------------------- */
+
+.paleta-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.paleta {
+  position: fixed;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 11;
+  width: min(560px, 82vw);
+  display: flex;
+  flex-direction: column;
+  background: var(--fondo);
+  border: 1px solid var(--linea);
+  border-radius: 6px;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  animation: caer 0.11s ease-out;
+}
+
+@keyframes caer {
+  from {
+    transform: translate(-50%, -6px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paleta {
+    animation: none;
+  }
+}
+
+.paleta-busqueda {
+  padding: 11px 14px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--linea);
+  color: var(--tinta);
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.paleta-busqueda::placeholder {
+  color: var(--tenue);
+}
+
+.paleta-lista {
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  max-height: 46vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--linea) transparent;
+}
+
+.paleta-lista li {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  padding: 6px 10px;
+  border-radius: 3px;
+  font-size: 12px;
+  color: var(--tinta);
+  cursor: pointer;
+}
+
+.paleta-lista li.seleccionada {
+  background: var(--realce);
+  box-shadow: inset 2px 0 0 var(--acento);
+}
+
+/* Ancho fijo y sin encoger: es una columna, y si se comprime deja los nombres
+   de grupo cortados a tres letras. */
+.paleta-grupo {
+  flex: 0 0 72px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--tenue);
+}
+
+.paleta-titulo {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.paleta-lista kbd {
+  font: inherit;
+  font-size: 10.5px;
+  color: var(--tenue);
+  border: 1px solid var(--linea);
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
+.paleta-vacio {
+  color: var(--tenue);
+  cursor: default;
+}
+
+/* Barra de estado ------------------------------------------------------- */
+
+.barra-estado {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 0 0 auto;
+  height: 22px;
+  padding: 0 12px;
+  background: var(--chrome);
+  border-top: 1px solid var(--linea);
+  font-size: 11px;
+  color: var(--tenue);
+  /* Los numeros cambian todo el tiempo; sin cifras de ancho fijo la barra
+     tiembla. */
+  font-variant-numeric: tabular-nums;
+}
+
+/* Antes era el caracter │, que cada fuente dibuja a distinta altura y grosor.
+   Ahora es una linea de verdad, alineada con la barra. */
+.separador-estado {
+  width: 1px;
+  height: 9px;
+  background: currentColor;
+  opacity: 0.3;
+}
+
+.barra-estado .widget-cwd {
+  max-width: 42ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  text-align: left;
+}
+
+.barra-estado .widget-hora {
+  margin-left: auto;
+}
+
+/* Panel de ajustes ----------------------------------------------------- */
+
+.settings-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+}
+
+.settings {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 6;
+  width: 316px;
+  display: flex;
+  flex-direction: column;
+  background: var(--fondo);
+  border-left: 1px solid var(--linea);
+  box-shadow: -1px 0 0 var(--acento), -22px 0 44px rgba(0, 0, 0, 0.4);
+  animation: entrar 0.12s ease-out;
+}
+
+@keyframes entrar {
+  from {
+    transform: translateX(10px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings {
+    animation: none;
+  }
+}
+
+.settings-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--barra);
+  padding: 0 8px 0 14px;
+  border-bottom: 1px solid var(--linea);
+}
+
+.settings-head strong {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--tinta);
+}
+
+.settings-head .icono {
+  width: 24px;
+  height: 22px;
+  background: none;
+  border: 0;
+  border-radius: 4px;
+  color: var(--tenue);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.settings-head .icono:hover {
+  color: var(--tinta);
+  background: var(--realce);
+}
+
+.settings-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--linea);
+}
+
+.settings-tabs button {
+  flex: 1;
+  padding: 8px 4px;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--tenue);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: color 0.1s, border-color 0.1s;
+}
+
+.settings-tabs button:hover {
+  color: var(--tinta);
+}
+
+.settings-tabs button.activa {
+  color: var(--tinta);
+  border-bottom-color: var(--acento);
+}
+
+.settings-cuerpo {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 14px 28px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--linea) transparent;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  font-size: 11.5px;
+  color: var(--tenue);
+}
+
+.campo > span {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+/* Los valores en cifras tabulares: al arrastrar un slider el numero no debe
+   bailar de ancho. */
+.campo em {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--acento);
+  font-variant-numeric: tabular-nums;
+}
+
+/* El select nativo de Windows trae fondo claro y flecha propia: rompia el
+   material del resto del panel. */
+.campo select {
+  appearance: none;
+  width: 100%;
+  background: var(--realce);
+  color: var(--tinta);
+  border: 1px solid var(--linea);
+  border-radius: 2px;
+  padding: 6px 24px 6px 8px;
+  font-size: 11.5px;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: right 11px center, right 7px center;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+}
+
+.campo select:hover {
+  border-color: var(--acento);
+}
+
+.campo select option {
+  background: var(--fondo);
+  color: var(--tinta);
+}
+
+.campo.interruptor,
+.campo.color {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.campo.interruptor > span,
+.campo.color > span {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.campo.interruptor em {
+  color: var(--tenue);
+  opacity: 0.75;
+  font-size: 10px;
+}
+
+/* Riel de 2 px y pulgar cuadrado: la unidad de una terminal es la celda, no
+   la pastilla redondeada. */
+.campo input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 12px;
+  background: none;
+  cursor: ew-resize;
+}
+
+.campo input[type='range']::-webkit-slider-runnable-track {
+  height: 2px;
+  background: var(--linea);
+}
+
+.campo input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 9px;
+  height: 12px;
+  margin-top: -5px;
+  background: var(--acento);
+  border: 0;
+}
+
+.campo input[type='checkbox'] {
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border: 1px solid var(--linea);
+  background: var(--realce);
+  cursor: pointer;
+  position: relative;
+}
+
+.campo input[type='checkbox']:checked {
+  background: var(--acento);
+  border-color: var(--acento);
+}
+
+.campo input[type='checkbox']:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--fondo);
+  border-width: 0 2px 2px 0;
+  transform: rotate(42deg);
+}
+
+.campo input[type='color'] {
+  width: 34px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--linea);
+  background: none;
+  cursor: pointer;
+}
+
+.separador {
+  height: 1px;
+  background: var(--linea);
+  margin: 18px 0 15px;
+}
+
+/* Sección SSH del panel de ajustes */
+
+.campo .texto {
+  width: 100%;
+  background: var(--realce);
+  border: 1px solid var(--linea);
+  border-radius: 2px;
+  padding: 5px 8px;
+  color: var(--tinta);
+  font: inherit;
+  font-size: 11.5px;
+  outline: none;
+}
+
+.campo .texto:focus {
+  border-color: var(--acento);
+}
+
+.campo .texto::placeholder {
+  color: var(--tenue);
+  opacity: 0.7;
+}
+
+.nota {
+  margin: 8px 0 0;
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--tenue);
+}
+
+.nota.error {
+  color: #e27878;
+}
+
+.lista-ssh {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista-ssh li {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.lista-ssh .editar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  align-items: flex-start;
+  padding: 6px 8px;
+  background: var(--realce);
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: var(--tinta);
+  font: inherit;
+  font-size: 11.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lista-ssh .editar:hover {
+  border-color: var(--acento);
+}
+
+.lista-ssh .editar span {
+  font-size: 10.5px;
+  color: var(--tenue);
+}
+
+.lista-ssh .borrar {
+  padding: 0 8px;
+  background: none;
+  border: 0;
+  border-radius: 3px;
+  color: var(--tenue);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.lista-ssh .borrar:hover {
+  background: rgba(226, 120, 120, 0.15);
+  color: #e27878;
+}
+
+.botones-ssh {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.botones-ssh button {
+  padding: 6px 12px;
+  background: var(--realce);
+  border: 1px solid var(--linea);
+  border-radius: 3px;
+  color: var(--tinta);
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.botones-ssh .primario {
+  background: var(--acento);
+  border-color: var(--acento);
+  color: var(--fondo);
+}
+
+.botones-ssh button:hover {
+  filter: brightness(1.15);
+}
+
+.grupo {
+  margin: 0 0 8px;
+  font-size: 10px;
+  color: var(--tenue);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+/* Perfiles propios ------------------------------------------------------ */
+
+/* Reusa la lista de SSH y solo cambia lo que no es igual: aca cada fila es una
+   linea, no un boton que abre un formulario. */
+.lista-perfiles li {
+  align-items: center;
+  gap: 7px;
+  padding: 5px 8px;
+  background: var(--realce);
+  border-radius: 3px;
+  font-size: 11.5px;
+}
+
+.lista-perfiles svg {
+  flex: none;
+  color: var(--tenue);
+}
+
+.lista-perfiles .nombre {
+  flex: none;
+}
+
+.lista-perfiles code {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10.5px;
+  color: var(--tenue);
+}
+
+.lista-perfiles .vacia {
+  padding: 5px 8px;
+  font-size: 10.5px;
+  color: var(--tenue);
+  background: none;
+}
+
+.alta-perfil {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--linea);
+}
+
+.alta-perfil textarea {
+  resize: vertical;
+  min-height: 46px;
+  line-height: 1.4;
+}
+
+/* Los dieciseis colores ANSI en Ajustes. Ojo con el nombre: antes se llamaba
+   .paleta y pisaba a la paleta de comandos, que quedaba dibujada como grilla. */
+.paleta-colores {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.paleta-colores input[type='color'] {
+  width: 100%;
+  height: 22px;
+}
+
+.temas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.tema {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+  padding: 6px;
+  background: none;
+  border: 1px solid var(--linea);
+  border-radius: 3px;
+  color: var(--tenue);
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color 0.1s, color 0.1s;
+}
+
+.tema:hover {
+  border-color: var(--acento);
+  color: var(--tinta);
+}
+
+.tema .muestra {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  width: 100%;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 2px;
+}
+
+.tema .muestra i {
+  width: 7px;
+  height: 7px;
+}

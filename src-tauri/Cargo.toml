@@ -1,0 +1,54 @@
+[package]
+name = "app"
+version = "0.1.0"
+description = "A Tauri App"
+authors = ["you"]
+license = ""
+repository = ""
+edition = "2021"
+rust-version = "1.77.2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "app_lib"
+# staticlib y cdylib son para iOS y Android. En desktop solo agregan una DLL
+# contra la que el binario de test se enlaza sin poder resolver los simbolos,
+# y `cargo test` muere con STATUS_ENTRYPOINT_NOT_FOUND antes de correr nada.
+# Si alguna vez se apunta a movil, hay que devolverlos.
+crate-type = ["lib"]
+
+[build-dependencies]
+tauri-build = { version = "2.6.3", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+tauri = { version = "2.11.3", features = [] }
+tauri-plugin-log = "2"
+portable-pty = "0.9.0"
+base64 = "0.23.1"
+uuid = { version = "1.20.0", features = ["v4"] }
+toml = "1.0.7"
+dirs = "6.0.0"
+notify = "8.2.0"
+windows-sys = { version = "0.61.2", features = [
+    "Win32_Graphics_Dwm",
+    "Win32_Foundation",
+    # El nombre de la GPU sale del registro: leerlo con `wmic` costaria medio
+    # segundo de arranque.
+    "Win32_System_Registry",
+] }
+sysinfo = { version = "0.36.1", default-features = false, features = ["system"] }
+
+
+# El binario se distribuye, no se depura: conviene que sea chico y rapido de
+# cargar. `lto` y un solo codegen-unit dejan optimizar entre crates, y sin
+# simbolos el ejecutable pesa bastante menos, que es memoria que el sistema no
+# tiene que mapear al abrir.
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+opt-level = 3

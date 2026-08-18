@@ -1,0 +1,175 @@
+use std::io::{Read, Write};
+use std::sync::{Arc, Mutex};
+
+use portable_pty::{native_pty_system, ChildKiller, CommandBuilder, MasterPty, PtySize};
+use serde::Deserialize;
+
+use super::sink::PtySink;
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpawnOptions {
+    pub shell: Option<String>,
+    pub args: Option<Vec<String>>,
+    pub cwd: Option<String>,
+    pub cols: u16,
+    pub rows: u16,
+}
+
+pub struct PtySession {
+    master: Box<dyn MasterPty + Send>,
+    writer: Mutex<Box<dyn Write + Send>>,
+    killer: Box<dyn ChildKiller + Send + Sync>,
+}
+
+impl PtySession {
+    pub fn spawn(sink: Arc<dyn PtySink>, options: SpawnOptions) -> Result<Self, String> {
+        let pty_system = native_pty_system();
+        let size = PtySize {
+            rows: options.rows.max(1),
+            cols: options.cols.max(1),
+            pixel_width: 0,
+            pixel_height: 0,
+        };
+
+        let pair = pty_system.openpty(size).map_err(|e| e.to_string())?;
+
+        // El programa y cada argumento viajan separados hasta CreateProcess:
+        // nunca se arma una linea de comando concatenando strings, asi que no
+        // hay superficie de inyeccion aunque el perfil venga de config.
+        let program = options.shell.unwrap_or_else(default_shell);
+        let programa_log = program.clone();
+        let mut cmd = CommandBuilder::new(program);
+        for arg in options.args.unwrap_or_default() {
+            cmd.arg(arg);
+        }
+        if let Some(cwd) = options.cwd {
+            cmd.cwd(cwd);
+        }
+        // Sin esto los programas que consultan TERM (vim, less, htop) creen que
+        // estan en una terminal tonta y desactivan color y posicionamiento.
+        cmd.env("TERM", "xterm-256color");
+        cmd.env("COLORTERM", "truecolor");
+
+        log::info!("abriendo shell: {programa_log}");
+        let mut child = pair.slave.spawn_command(cmd).map_err(|e| {
+            log::error!("no se pudo abrir {programa_log}: {e}");
+            e.to_string()
+        })?;
+        // El slave tiene que morir aca: mientras siga abierto de este lado, el
+        // reader nunca ve EOF y la sesion parece viva despues de salir el shell.
+        drop(pair.slave);
+
+        let killer = child.clone_killer();
+        let writer = pair.master.take_writer().map_err(|e| e.to_string())?;
+        let mut reader = pair.master.try_clone_reader().map_err(|e| e.to_string())?;
+
+        // Leer y emitir van en hilos distintos, con la salida agrupada en el
+        // medio. ConPTY devuelve pedazos chicos —a veces una linea— y cada uno
+        // cruzaba el puente como un evento propio: JSON, base64 y una vuelta
+        // por el bucle de eventos del webview por cada pedacito. Con salida
+        // pesada eso era casi todo el costo.
+        //
+        // El agrupador junta lo que llegue mientras siga llegando y corta al
+        // primer respiro o al llenarse. La demora que agrega es menos de un
+        // cuadro, asi que no se nota al escribir.
+        let (tx, rx) = std::sync::mpsc::channel::<Vec<u8>>();
+
+        std::thread::spawn(move || {
+            let mut buf = [0u8; 8192];
+            loop {
+                match reader.read(&mut buf) {
+                    Ok(0) => break,
+                    Ok(n) => {
+                        if tx.send(buf[..n].to_vec()).is_err() {
+                            break;
+                        }
+                    }
+                    Err(_) => break,
+                }
+            }
+        });
+
+        let data_sink = sink.clone();
+        std::thread::spawn(move || {
+            use std::sync::mpsc::RecvTimeoutError;
+
+            /// Un respiro mas corto que un cuadro a 60 Hz.
+            const RESPIRO: std::time::Duration = std::time::Duration::from_millis(3);
+            /// Tope duro: con `cat` de un archivo grande no hay respiro nunca, y
+            /// sin este corte el buffer creceria sin fin.
+            const TOPE: usize = 64 * 1024;
+
+            let mut juntado: Vec<u8> = Vec::new();
+
+            loop {
+                match rx.recv() {
+                    Ok(primero) => juntado.extend_from_slice(&primero),
+                    Err(_) => break,
+                }
+
+                let mut cerrado = false;
+                while juntado.len() < TOPE {
+                    match rx.recv_timeout(RESPIRO) {
+                        Ok(mas) => juntado.extend_from_slice(&mas),
+                        Err(RecvTimeoutError::Timeout) => break,
+                        Err(RecvTimeoutError::Disconnected) => {
+                            cerrado = true;
+                            break;
+                        }
+                    }
+                }
+
+                data_sink.data(&juntado);
+                juntado.clear();
+
+                if cerrado {
+                    break;
+                }
+            }
+        });
+
+        std::thread::spawn(move || {
+            let code = child.wait().ok().map(|status| status.exit_code() as i32);
+            sink.exit(code);
+        });
+
+        Ok(Self {
+            master: pair.master,
+            writer: Mutex::new(writer),
+            killer,
+        })
+    }
+
+    pub fn write(&self, data: &str) -> Result<(), String> {
+        let mut writer = self.writer.lock().map_err(|e| e.to_string())?;
+        writer.write_all(data.as_bytes()).map_err(|e| e.to_string())?;
+        writer.flush().map_err(|e| e.to_string())
+    }
+
+    pub fn resize(&self, cols: u16, rows: u16) -> Result<(), String> {
+        self.master
+            .resize(PtySize {
+                rows: rows.max(1),
+                cols: cols.max(1),
+                pixel_width: 0,
+                pixel_height: 0,
+            })
+            .map_err(|e| e.to_string())
+    }
+
+    pub fn kill(&mut self) {
+        let _ = self.killer.kill();
+    }
+}
+
+fn default_shell() -> String {
+    #[cfg(windows)]
+    {
+        "powershell.exe".to_string()
+    }
+    #[cfg(not(windows))]
+    {
+        std::env::var("SHELL").unwrap_or_else(|_| "/bin/bash".to_string())
+    }
+}

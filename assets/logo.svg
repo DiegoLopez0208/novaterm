@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="fondo" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#20253a"/>
+      <stop offset="1" stop-color="#0b0d15"/>
+    </linearGradient>
+
+    <!-- El resplandor de la nova, detras del trazo diagonal. -->
+    <radialGradient id="nova" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#84a0c6" stop-opacity="0.55"/>
+      <stop offset="0.55" stop-color="#84a0c6" stop-opacity="0.13"/>
+      <stop offset="1" stop-color="#84a0c6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="114" fill="url(#fondo)"/>
+  <rect x="5" y="5" width="502" height="502" rx="109" fill="none"
+        stroke="#ffffff" stroke-opacity="0.08" stroke-width="10"/>
+
+  <circle cx="256" cy="238" r="190" fill="url(#nova)"/>
+
+  <!-- La N: los dos montantes en blanco y la diagonal en el azul de acento,
+       que es el haz del cursor cruzando la letra. Trazo grueso para que
+       sobreviva a 16 px. -->
+  <g fill="none" stroke-width="54" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M168 344 V 148" stroke="#e8edf5"/>
+    <path d="M344 344 V 148" stroke="#e8edf5"/>
+    <path d="M168 148 L 344 344" stroke="#84a0c6"/>
+  </g>
+
+  <!-- El destello: la nova del nombre. Va al costado del montante derecho y no
+       encima, o a tamaño chico se funden en una mancha. -->
+  <path d="M420 80 L433 111 L464 124 L433 137 L420 168 L407 137 L376 124 L407 111 Z"
+        fill="#e8edf5"/>
+
+  <!-- Firma: los colores ANSI, que es lo que la app configura. -->
+  <g>
+    <rect x="137" y="406" width="52" height="14" rx="7" fill="#e27878"/>
+    <rect x="199" y="406" width="52" height="14" rx="7" fill="#b4be82"/>
+    <rect x="261" y="406" width="52" height="14" rx="7" fill="#e2a478"/>
+    <rect x="323" y="406" width="52" height="14" rx="7" fill="#a093c7"/>
+  </g>
+</svg>

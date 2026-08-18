@@ -1,0 +1,442 @@
+import { useEffect, useRef, useState } from 'react'
+import { invoke } from '@tauri-apps/api/core'
+import { MenuPanel } from '../panes/MenuPanel'
+import { Terminal, type ITheme } from '@xterm/xterm'
+import { FitAddon } from '@xterm/addon-fit'
+import { WebglAddon } from '@xterm/addon-webgl'
+import { Unicode11Addon } from '@xterm/addon-unicode11'
+import { SearchAddon } from '@xterm/addon-search'
+import '@xterm/xterm/css/xterm.css'
+import {
+  closePty,
+  nuevoPtyId,
+  onPtyData,
+  onPtyExit,
+  resizePty,
+  spawnPty,
+  writePty,
+  type PtyId,
+  type SpawnOptions,
+} from './ptyBridge'
+import { conSimbolos, type NovaConfig } from '../config/configBridge'
+import { EVENTO_BUSCAR } from '../acciones/registro'
+import { decidir } from './portapapeles'
+import { construirBienvenida, type InfoSistema } from './bienvenida'
+import { BarraBusqueda } from './BarraBusqueda'
+import type { UnlistenFn } from '@tauri-apps/api/event'
+
+interface Props {
+  config: NovaConfig
+  profile?: Pick<SpawnOptions, 'shell' | 'args' | 'cwd'>
+  /** Panel visible y seleccionado. Al volver a serlo hay que remedir y enfocar. */
+  activo?: boolean
+  puedeCerrarPanel?: boolean
+  onDividir?: (direccion: 'vertical' | 'horizontal') => void
+  onCerrarPanel?: () => void
+  onExit?: (code: number | null) => void
+  onTitle?: (title: string) => void
+  /** Directorio actual, cuando el shell lo reporta por OSC 7. */
+  onCwd?: (cwd: string) => void
+}
+
+function construirTema(config: NovaConfig): ITheme {
+  const { colors } = config
+  return {
+    // Transparente: el fondo lo pinta el contenedor, una sola superficie para
+    // toda la ventana. Si lo pintara tambien xterm, el alpha se aplicaria dos
+    // veces y el area de texto quedaria mas opaca que su propio margen.
+    background: 'rgba(0, 0, 0, 0)',
+    foreground: colors.foreground,
+    cursor: colors.cursor,
+    cursorAccent: colors.background,
+    selectionBackground: colors.selection,
+    black: colors.normal.black,
+    red: colors.normal.red,
+    green: colors.normal.green,
+    yellow: colors.normal.yellow,
+    blue: colors.normal.blue,
+    magenta: colors.normal.magenta,
+    cyan: colors.normal.cyan,
+    white: colors.normal.white,
+    brightBlack: colors.bright.black,
+    brightRed: colors.bright.red,
+    brightGreen: colors.bright.green,
+    brightYellow: colors.bright.yellow,
+    brightBlue: colors.bright.blue,
+    brightMagenta: colors.bright.magenta,
+    brightCyan: colors.bright.cyan,
+    brightWhite: colors.bright.white,
+  }
+}
+
+function estiloDeCursor(style: string): 'block' | 'underline' | 'bar' {
+  if (style === 'block' || style === 'underline' || style === 'bar') return style
+  // "beam" es como lo llaman kitty y alacritty; xterm lo llama "bar".
+  if (style === 'beam') return 'bar'
+  return 'bar'
+}
+
+/// OSC 7 llega como `file://equipo/C:/Users/Diego/dev`. Se queda con la ruta y
+/// la devuelve al estilo del sistema.
+function rutaDesdeOsc7(dato: string): string | null {
+  try {
+    const url = new URL(dato)
+    if (url.protocol !== 'file:') return null
+    const ruta = decodeURIComponent(url.pathname)
+    // En Windows queda un "/" delante de la letra de unidad.
+    const limpia = /^\/[a-zA-Z]:/.test(ruta) ? ruta.slice(1) : ruta
+    return limpia.replace(/\//g, '\\').replace(/\\$/, '') || null
+  } catch {
+    return null
+  }
+}
+
+export function TerminalView({
+  config,
+  profile,
+  activo = true,
+  puedeCerrarPanel = false,
+  onExit,
+  onTitle,
+  onCwd,
+  onDividir,
+  onCerrarPanel,
+}: Props) {
+  const hostRef = useRef<HTMLDivElement>(null)
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
+  const ptyRef = useRef<PtyId | null>(null)
+  const termRef = useRef<Terminal | null>(null)
+  const fitRef = useRef<FitAddon | null>(null)
+  const buscadorRef = useRef<SearchAddon | null>(null)
+  const [busqueda, setBusqueda] = useState(false)
+  // La config y los callbacks viven en refs para que el efecto de arranque no
+  // dependa de ellos. El padre crea funciones nuevas en cada render; si el
+  // efecto las tuviera como dependencia, cerraria y volveria a abrir el shell
+  // en bucle y la terminal nunca mostraria nada.
+  const configRef = useRef(config)
+  configRef.current = config
+  const perfilRef = useRef(profile)
+  const onTitleRef = useRef(onTitle)
+  onTitleRef.current = onTitle
+  const onExitRef = useRef(onExit)
+  onExitRef.current = onExit
+  const onCwdRef = useRef(onCwd)
+  onCwdRef.current = onCwd
+
+  useEffect(() => {
+    const host = hostRef.current
+    if (!host) return
+
+    let disposed = false
+    let ptyId: PtyId | null = null
+    const unlisteners: UnlistenFn[] = []
+    const inicial = configRef.current
+
+    const term = new Terminal({
+      allowProposedApi: true,
+      allowTransparency: true,
+      fontFamily: conSimbolos(inicial.font.family),
+      fontSize: inicial.font.size,
+      lineHeight: inicial.font.line_height,
+      letterSpacing: inicial.font.letter_spacing,
+      cursorBlink: inicial.cursor.blink,
+      cursorStyle: estiloDeCursor(inicial.cursor.style),
+      scrollback: inicial.terminal.scrollback,
+      theme: construirTema(inicial),
+    })
+
+    const fit = new FitAddon()
+    term.loadAddon(fit)
+
+    const buscador = new SearchAddon()
+    term.loadAddon(buscador)
+    buscadorRef.current = buscador
+
+    const unicode11 = new Unicode11Addon()
+    term.loadAddon(unicode11)
+    term.unicode.activeVersion = '11'
+
+    term.open(host)
+
+    // Renderer de WebGL: una sola superficie que se repinta entera, en vez de
+    // los cientos de <span> del renderer del DOM. Es lo que baja el uso de CPU
+    // con salida pesada y lo que evita que se vean las regiones de repintado
+    // moviendose sobre una ventana translucida.
+    //
+    // Se descarto una vez porque con `allowTransparency` no dibujaba nada, pero
+    // aquella version pintaba el fondo desde xterm; ahora el fondo del tema es
+    // transparente y lo pinta el contenedor. Si el contexto se pierde (driver
+    // que se reinicia, GPU que se va a dormir) se descarga el addon y xterm
+    // vuelve solo al renderer del DOM.
+    if (inicial.terminal.gpu) {
+      try {
+        const webgl = new WebglAddon()
+        webgl.onContextLoss(() => webgl.dispose())
+        term.loadAddon(webgl)
+      } catch {
+        // Sin WebGL disponible queda el renderer del DOM, que siempre funciona.
+      }
+    }
+
+    fit.fit()
+    termRef.current = term
+    fitRef.current = fit
+
+    // xterm mide el tamaño de celda al construirse. Con las fuentes propias
+    // empaquetadas, la primera medicion puede caer sobre el fallback y dejar
+    // filas y columnas fantasma: al terminar de cargar hay que remedir.
+    void document.fonts.ready.then(() => {
+      if (disposed) return
+      try {
+        fit.fit()
+      } catch {
+        // el contenedor todavia no tiene tamaño util
+      }
+    })
+
+    term.onTitleChange((title) => onTitleRef.current?.(title))
+
+    // Devolver false deja que xterm siga procesando la secuencia; devolver true
+    // la daria por consumida.
+    term.parser.registerOscHandler(7, (dato) => {
+      const ruta = rutaDesdeOsc7(dato)
+      if (ruta) onCwdRef.current?.(ruta)
+      return false
+    })
+
+    term.onSelectionChange(() => {
+      if (!configRef.current.terminal.copy_on_select) return
+      const seleccion = term.getSelection()
+      if (seleccion) void navigator.clipboard.writeText(seleccion)
+    })
+
+    // Copiar y pegar como en Windows Terminal, PowerShell y CMD modernos. La
+    // regla vive en `portapapeles.ts` para poder probarla sin montar nada; aca
+    // solo se ejecuta lo que decidio.
+    term.attachCustomKeyEventHandler((evento) => {
+      if (evento.type !== 'keydown') return true
+
+      const decision = decidir(
+        {
+          tecla: evento.key,
+          ctrl: evento.ctrlKey,
+          shift: evento.shiftKey,
+          alt: evento.altKey,
+        },
+        term.hasSelection(),
+      )
+
+      if (decision === 'copiar') {
+        const seleccion = term.getSelection()
+        if (seleccion) {
+          void navigator.clipboard.writeText(seleccion)
+          // Windows Terminal deselecciona al copiar. Sin esto, el Ctrl+C
+          // siguiente vuelve a copiar en vez de interrumpir el proceso.
+          term.clearSelection()
+        }
+        return false
+      }
+
+      if (decision === 'pegar') {
+        void navigator.clipboard.readText().then((texto) => {
+          // term.paste y no writePty: si el programa activo pidio pegado entre
+          // corchetes, xterm envuelve el texto y vim deja de autoindentar cada
+          // linea pegada.
+          if (texto) term.paste(texto)
+        })
+        return false
+      }
+
+      // Devolver true deja pasar la tecla. Es lo que hace que Ctrl+C sin
+      // seleccion siga interrumpiendo el proceso.
+      return true
+    })
+
+    // La bienvenida se escribe **antes** de abrir el PTY: asi queda arriba de
+    // todo y el prompt del shell cae abajo, como si la hubiera impreso el
+    // sistema. Al reves competiria con la primera salida del shell.
+    const bienvenida = async () => {
+      if (!inicial.ui.welcome) return
+      try {
+        const info = await invoke<InfoSistema>('system_info')
+        if (!disposed) term.write(construirBienvenida(info, inicial, term.cols))
+      } catch {
+        // Sin datos del sistema no hay bienvenida, y no es motivo para que la
+        // terminal no abra.
+      }
+    }
+
+    const start = async () => {
+      // Escuchar primero y abrir despues. Al reves se pierde el prompt: el
+      // shell escribe apenas existe el PTY, sin esperar a que haya alguien del
+      // otro lado.
+      const id = nuevoPtyId()
+      ptyId = id
+      ptyRef.current = id
+
+      await bienvenida()
+
+      unlisteners.push(await onPtyData(id, (bytes) => term.write(bytes)))
+      unlisteners.push(
+        await onPtyExit(id, ({ code }) => {
+          term.write(
+            `\r\n\x1b[38;5;244m[proceso terminado: ${code ?? 'sin codigo'}]\x1b[0m\r\n`,
+          )
+          onExitRef.current?.(code)
+        }),
+      )
+
+      if (disposed) return
+
+      await spawnPty(id, {
+        ...perfilRef.current,
+        cols: term.cols,
+        rows: term.rows,
+      })
+
+      if (disposed) {
+        void closePty(id)
+        return
+      }
+
+      term.onData((data) => {
+        void writePty(id, data)
+      })
+      term.onResize(({ cols, rows }) => {
+        void resizePty(id, cols, rows)
+      })
+
+      term.focus()
+    }
+
+    start().catch((err) => {
+      term.write(`\r\n\x1b[31mno se pudo abrir el shell: ${String(err)}\x1b[0m\r\n`)
+    })
+
+    const observer = new ResizeObserver(() => {
+      try {
+        fit.fit()
+      } catch {
+        // el contenedor puede medir 0 mientras se anima; el proximo tick corrige
+      }
+    })
+    observer.observe(host)
+
+    return () => {
+      disposed = true
+      observer.disconnect()
+      unlisteners.forEach((un) => un())
+      if (ptyId) void closePty(ptyId)
+      term.dispose()
+      termRef.current = null
+      fitRef.current = null
+      buscadorRef.current = null
+    }
+    // Sin dependencias a proposito: este efecto abre el shell una sola vez por
+    // panel. La config la aplica el efecto de abajo sobre la terminal ya viva.
+  }, [])
+
+  // Config en caliente sobre la terminal viva. Recrearla mataria el shell y
+  // perderias el scrollback cada vez que tocas un color.
+  useEffect(() => {
+    const term = termRef.current
+    if (!term) return
+
+    term.options.fontFamily = conSimbolos(config.font.family)
+    term.options.fontSize = config.font.size
+    term.options.lineHeight = config.font.line_height
+    term.options.letterSpacing = config.font.letter_spacing
+    term.options.cursorBlink = config.cursor.blink
+    term.options.cursorStyle = estiloDeCursor(config.cursor.style)
+    term.options.scrollback = config.terminal.scrollback
+    term.options.theme = construirTema(config)
+
+    // Cambiar la fuente cambia el tamano de celda: sin refit quedan filas y
+    // columnas fantasma y el shell escribe en el lugar equivocado.
+    try {
+      fitRef.current?.fit()
+    } catch {
+      // el contenedor todavia no tiene tamano util
+    }
+  }, [config])
+
+  // Una pestaña oculta mide cero, asi que xterm quedo con el tamaño viejo.
+  // Al volver hay que remedir antes de escribir o el shell dibuja en columnas
+  // que no existen.
+  useEffect(() => {
+    if (!activo) return
+    const term = termRef.current
+    if (!term) return
+
+    const id = window.setTimeout(() => {
+      try {
+        fitRef.current?.fit()
+      } catch {
+        // todavia sin tamaño util
+      }
+      term.focus()
+    }, 0)
+    return () => window.clearTimeout(id)
+  }, [activo])
+
+  // Solo el panel activo abre la busqueda. El pedido llega por evento del DOM
+  // desde el atajo global, que no tiene forma de alcanzar esta instancia.
+  useEffect(() => {
+    if (!activo) return
+    const abrir = () => setBusqueda(true)
+    window.addEventListener(EVENTO_BUSCAR, abrir)
+    return () => window.removeEventListener(EVENTO_BUSCAR, abrir)
+  }, [activo])
+
+  const copiar = () => {
+    const seleccion = termRef.current?.getSelection()
+    if (seleccion) void navigator.clipboard.writeText(seleccion)
+  }
+
+  const pegar = () => {
+    void navigator.clipboard.readText().then((texto) => {
+      if (texto) termRef.current?.paste(texto)
+      termRef.current?.focus()
+    })
+  }
+
+  // Un clic en cualquier parte del panel devuelve el foco al shell. Sin esto,
+  // hacer clic en la zona vacia de abajo dejaba la terminal sin foco y parecia
+  // que no respondia al teclado.
+  return (
+    <>
+      <div
+        className="terminal-host"
+        ref={hostRef}
+        onMouseDown={() => termRef.current?.focus()}
+        onContextMenu={(e) => {
+          e.preventDefault()
+          setMenu({ x: e.clientX, y: e.clientY })
+        }}
+      />
+
+      {busqueda && (
+        <BarraBusqueda
+          buscador={buscadorRef.current}
+          onCerrar={() => {
+            setBusqueda(false)
+            termRef.current?.focus()
+          }}
+        />
+      )}
+
+      {menu && (
+        <MenuPanel
+          x={menu.x}
+          y={menu.y}
+          puedeCerrar={puedeCerrarPanel}
+          onDividir={(direccion) => onDividir?.(direccion)}
+          onCopiar={copiar}
+          onPegar={pegar}
+          onCerrarPanel={() => onCerrarPanel?.()}
+          onCerrar={() => setMenu(null)}
+        />
+      )}
+    </>
+  )
+}

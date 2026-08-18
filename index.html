@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NovaTerm</title>
+    <!-- El splash vive en el HTML y no en React a proposito: se pinta apenas el
+         webview parsea el documento, sin esperar a que cargue ni se ejecute el
+         bundle. Los estilos van inline por lo mismo. -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: transparent;
+      }
+      #splash {
+        position: fixed;
+        inset: 0;
+        z-index: 999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0d0f18;
+        animation: splash-entrada 0.18s ease-out;
+      }
+      #splash svg {
+        width: 76px;
+        height: 76px;
+        animation: splash-latido 1.4s ease-in-out infinite;
+      }
+      @keyframes splash-entrada {
+        from {
+          opacity: 0;
+        }
+      }
+      @keyframes splash-latido {
+        50% {
+          opacity: 0.55;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="splash">
+      <svg viewBox="0 0 512 512" aria-hidden="true">
+        <g fill="none" stroke-width="72" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M146 386 V 126" stroke="#e8edf5" />
+          <path d="M366 386 V 126" stroke="#e8edf5" />
+          <path d="M146 126 L 366 386" stroke="#84a0c6" />
+        </g>
+      </svg>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
