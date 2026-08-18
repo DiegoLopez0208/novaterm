@@ -40,13 +40,21 @@
 /* Los glifos de Powerline, Starship y devicons, como ultimo recurso de toda
    cadena de fuentes: asi cualquier familia que elijas —incluidas las del
    sistema— dibuja bien un prompt con Nerd Font sin tener que parchearla. La
-   variante Mono respeta el ancho de celda. */
+   variante Mono respeta el ancho de celda.
+
+   El unicode-range son los 17 rangos que la fuente cubre de verdad, sacados de
+   su cmap; ninguno pisa texto latino. Sin el, el webview cargaba y rasterizaba
+   los 10.519 glifos aunque el prompt no usara ninguno. */
 @font-face {
   font-family: 'Simbolos Nova';
-  src: url('./assets/fonts/SymbolsNerdFontMono-Regular.ttf') format('truetype');
+  src: url('./assets/fonts/SymbolsNerdFontMono-Regular.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
   font-display: block;
+  unicode-range: U+23FB-23FE, U+2630, U+2665, U+26A1, U+276C-2771, U+2B58,
+    U+E000-E00A, U+E0A0-E0D7, U+E200-E2A9, U+E300-E3E3, U+E5FA-E6BB,
+    U+E700-E8EF, U+EA60-EC84, U+ED00-EFCF, U+F000-F385, U+F400-F533,
+    U+F0001-F1AF0;
 }
 
 :root {
