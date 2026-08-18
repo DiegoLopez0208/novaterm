@@ -1,4 +1,7 @@
-use super::{Colors, CursorConfig, FontConfig, Palette, TerminalConfig, UiConfig, WindowConfig};
+use super::{
+    Colors, CursorConfig, FontConfig, LlmConfig, Palette, PluginsConfig, TerminalConfig, UiConfig,
+    WindowConfig,
+};
 
 impl Default for WindowConfig {
     fn default() -> Self {
@@ -55,6 +58,28 @@ impl Default for UiConfig {
             status_bar: true,
             animations: true,
             welcome: true,
+        }
+    }
+}
+
+impl Default for LlmConfig {
+    fn default() -> Self {
+        Self {
+            provider: crate::llm::Proveedor::Deepseek,
+            model: String::new(),
+            // Alcanza para un dia de uso normal de un plugin que explica errores
+            // y corta mucho antes de que un bucle haga dano.
+            tokens_por_dia: 200_000,
+        }
+    }
+}
+
+impl Default for PluginsConfig {
+    fn default() -> Self {
+        Self {
+            concedidos: std::collections::HashMap::new(),
+            de_confianza: Vec::new(),
+            registro: "http://127.0.0.1:8787".to_string(),
         }
     }
 }

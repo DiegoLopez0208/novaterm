@@ -40,6 +40,23 @@ windows-sys = { version = "0.61.2", features = [
     "Win32_System_Registry",
 ] }
 sysinfo = { version = "0.36.1", default-features = false, features = ["system"] }
+# rustls y no el TLS del sistema: schannel arrastra dependencias de compilacion
+# y el binario se distribuye tal cual. Sin `default-features` no entra todo el
+# stack de cookies, proxies y compresion que no se usa.
+reqwest = { version = "0.12", default-features = false, features = [
+    "json",
+    "rustls-tls",
+    "http2",
+] }
+# Las claves de los proveedores van al Administrador de credenciales de Windows,
+# nunca a config.toml: el archivo lo lee cualquiera y los plugins ni siquiera
+# tienen que poder pedirlas.
+keyring = { version = "3", features = ["windows-native"] }
+sha2 = "0.10"
+ed25519-dalek = "2"
+hex = "0.4"
+flate2 = "1"
+tar = "0.4"
 
 # Solo Windows: ICoreWebView2_19::SetMemoryUsageTargetLevel, para que el webview
 # suelte caches cuando la ventana lleva rato sin foco. Las dos ya venian como

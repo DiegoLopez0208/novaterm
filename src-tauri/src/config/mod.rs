@@ -25,6 +25,34 @@ pub struct Config {
     /// al detectado.
     #[serde(default)]
     pub profiles: Vec<crate::profiles::Profile>,
+    #[serde(default)]
+    pub llm: LlmConfig,
+    #[serde(default)]
+    pub plugins: PluginsConfig,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct LlmConfig {
+    pub provider: crate::llm::Proveedor,
+    /// Vacio significa "el que el proveedor traiga por defecto".
+    pub model: String,
+    /// Tope de tokens por plugin y por dia. Es lo unico que separa un plugin con
+    /// un bucle mal escrito de una factura desagradable.
+    pub tokens_por_dia: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct PluginsConfig {
+    /// Permisos que el usuario aprobo, por id de plugin. Un permiso que no este
+    /// aca se rechaza aunque el manifiesto lo declare: instalar no es aprobar.
+    pub concedidos: std::collections::HashMap<String, Vec<crate::plugins::Permiso>>,
+    /// Plugins a los que se les dejo de pedir confirmacion por cada escritura en
+    /// la terminal. Se marca a mano y por plugin.
+    pub de_confianza: Vec<String>,
+    /// De donde salen los plugins del catalogo.
+    pub registro: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

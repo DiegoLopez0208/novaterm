@@ -4,6 +4,7 @@ pub mod memoria;
 mod tests_color;
 
 pub mod config;
+pub mod llm;
 pub mod plugins;
 pub mod profiles;
 pub mod pty;
@@ -45,6 +46,7 @@ pub fn run() {
         .manage(store)
         .manage(Monitor::default())
         .manage(DeteccionCache::default())
+        .manage(crate::llm::Presupuesto::default())
         .invoke_handler(tauri::generate_handler![
             commands::pty_spawn,
             commands::pty_write,
@@ -65,7 +67,17 @@ pub fn run() {
             commands::ssh_save,
             commands::ssh_delete,
             commands::window_border,
-            commands::window_blur
+            commands::window_blur,
+            commands::plugin_entry,
+            commands::plugin_conceder,
+            commands::plugin_confianza,
+            commands::market_buscar,
+            commands::market_detalle,
+            commands::plugin_install,
+            commands::plugin_uninstall,
+            commands::llm_estado,
+            commands::llm_clave,
+            commands::llm_complete
         ])
         .setup(|app| {
             // Tambien en release: sin log, un fallo al abrir el shell en el

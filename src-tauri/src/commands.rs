@@ -7,6 +7,7 @@ use crate::config::{Config, ConfigStore};
 use crate::plugins::{descubrir, directorio_plugins, ejecutar_widget, Plugin, WidgetPlugin};
 use crate::profiles::{combinar, DeteccionCache, Profile};
 use crate::ssh;
+use crate::llm::Presupuesto;
 use crate::pty::{CanalSink, ExitPayload, PtyManager, PtySink, SpawnOptions};
 use crate::stats::{info_sistema, InfoSistema, Monitor, Stats};
 
@@ -188,4 +189,201 @@ pub fn pty_resize(
 #[tauri::command]
 pub fn pty_close(manager: State<'_, PtyManager>, id: String) -> Result<(), String> {
     manager.close(&id)
+}
+
+// --- plugins: permisos, codigo y catalogo -----------------------------------
+
+/// El codigo del plugin, para que el frontend lo meta en su iframe.
+///
+/// Lo lee Rust y no el webview: el webview no tiene acceso al sistema de
+/// archivos, y darselo para esto abriria un agujero mucho mayor que el problema
+/// que resuelve.
+#[tauri::command]
+pub fn plugin_entry(id: String) -> Result<String, String> {
+    let plugins = descubrir(&directorio_plugins());
+    let plugin = plugins
+        .iter()
+        .find(|p| p.id == id)
+        .ok_or_else(|| format!("no hay ningun plugin instalado con id '{id}'"))?;
+    crate::plugins::leer_entry(plugin)
+}
+
+/// Guarda lo que el usuario aprobo en la pantalla de consentimiento.
+///
+/// Se cruzan contra lo que el manifiesto declara: conceder un permiso que el
+/// plugin no pidio no tiene sentido y seria una forma de ampliarle el alcance
+/// sin que se note en su ficha.
+#[tauri::command]
+pub fn plugin_conceder(
+    store: State<'_, ConfigStore>,
+    id: String,
+    permisos: Vec<crate::plugins::Permiso>,
+) -> Result<(), String> {
+    let plugins = descubrir(&directorio_plugins());
+    let plugin = plugins
+        .iter()
+        .find(|p| p.id == id)
+        .ok_or_else(|| format!("no hay ningun plugin instalado con id '{id}'"))?;
+
+    for permiso in &permisos {
+        if !plugin.permissions.contains(permiso) {
+            return Err(format!(
+                "el plugin '{id}' no declara el permiso {permiso:?} en su manifiesto"
+            ));
+        }
+    }
+
+    let mut config = store.current();
+    config.plugins.concedidos.insert(id, permisos);
+    store.save(&config)
+}
+
+/// Marca o desmarca un plugin como de confianza. Solo afecta a si se pide
+/// confirmacion por cada escritura en la terminal.
+#[tauri::command]
+pub fn plugin_confianza(
+    store: State<'_, ConfigStore>,
+    id: String,
+    confiar: bool,
+) -> Result<(), String> {
+    let mut config = store.current();
+    config.plugins.de_confianza.retain(|x| x != &id);
+    if confiar {
+        config.plugins.de_confianza.push(id);
+    }
+    store.save(&config)
+}
+
+#[tauri::command]
+pub async fn market_buscar(
+    store: State<'_, ConfigStore>,
+    consulta: String,
+) -> Result<Vec<crate::plugins::instalar::Ficha>, String> {
+    let base = store.current().plugins.registro;
+    crate::plugins::instalar::buscar(&base, &consulta).await
+}
+
+#[tauri::command]
+pub async fn market_detalle(
+    store: State<'_, ConfigStore>,
+    id: String,
+) -> Result<crate::plugins::instalar::Ficha, String> {
+    let base = store.current().plugins.registro;
+    crate::plugins::instalar::detalle(&base, &id).await
+}
+
+/// Baja, verifica e instala una version.
+///
+/// La ficha se vuelve a pedir al registro en vez de aceptar la que manda el
+/// frontend: la clave publica del publicador y el sha256 son justo lo que no
+/// puede venir del lado que se quiere verificar.
+#[tauri::command]
+pub async fn plugin_install(
+    store: State<'_, ConfigStore>,
+    id: String,
+    version: Option<String>,
+) -> Result<String, String> {
+    let base = store.current().plugins.registro;
+    let ficha = crate::plugins::instalar::detalle(&base, &id).await?;
+
+    let elegida = match &version {
+        Some(v) => ficha.versions.iter().find(|x| &x.version == v),
+        None => ficha.versions.last(),
+    }
+    .ok_or_else(|| "el registro no ofrece esa version".to_string())?
+    .clone();
+
+    let raiz = directorio_plugins();
+    std::fs::create_dir_all(&raiz).map_err(|e| e.to_string())?;
+    let carpeta = crate::plugins::instalar::instalar(&ficha, &elegida, &raiz).await?;
+    Ok(carpeta.to_string_lossy().to_string())
+}
+
+/// Desinstala y ademas olvida lo que se le habia concedido: si mas adelante se
+/// vuelve a instalar, los permisos se piden de nuevo.
+#[tauri::command]
+pub fn plugin_uninstall(store: State<'_, ConfigStore>, id: String) -> Result<(), String> {
+    crate::plugins::instalar::desinstalar(&directorio_plugins(), &id)?;
+
+    let mut config = store.current();
+    config.plugins.concedidos.remove(&id);
+    config.plugins.de_confianza.retain(|x| x != &id);
+    store.save(&config)
+}
+
+// --- IA ---------------------------------------------------------------------
+
+#[derive(serde::Serialize)]
+pub struct EstadoLlm {
+    pub provider: crate::llm::Proveedor,
+    pub model: String,
+    pub tokens_por_dia: u64,
+    pub hay_clave: bool,
+    pub gastado: std::collections::HashMap<String, u64>,
+}
+
+#[tauri::command]
+pub fn llm_estado(store: State<'_, ConfigStore>, presupuesto: State<'_, Presupuesto>) -> EstadoLlm {
+    let config = store.current();
+    let provider = config.llm.provider;
+    EstadoLlm {
+        provider,
+        model: if config.llm.model.is_empty() {
+            provider.modelo_por_defecto().to_string()
+        } else {
+            config.llm.model.clone()
+        },
+        tokens_por_dia: config.llm.tokens_por_dia,
+        hay_clave: crate::llm::hay_clave(provider),
+        gastado: presupuesto.gastado(),
+    }
+}
+
+/// Guarda la clave en el llavero del sistema. Una clave vacia la borra.
+///
+/// No devuelve la clave nunca, ni siquiera enmascarada: el frontend solo
+/// necesita saber si hay una.
+#[tauri::command]
+pub fn llm_clave(proveedor: crate::llm::Proveedor, clave: String) -> Result<(), String> {
+    crate::llm::guardar_clave(proveedor, &clave)
+}
+
+/// Le pide una respuesta al modelo en nombre de un plugin.
+///
+/// El permiso se vuelve a comprobar aca aunque el broker del frontend ya lo haya
+/// hecho. El broker es codigo nuestro, pero es la capa que un bug de la interfaz
+/// puede saltear; esta es la que decide de verdad.
+#[tauri::command]
+pub async fn llm_complete(
+    store: State<'_, ConfigStore>,
+    presupuesto: State<'_, Presupuesto>,
+    plugin_id: String,
+    pedido: crate::llm::Pedido,
+) -> Result<crate::llm::Respuesta, String> {
+    let config = store.current();
+
+    let concedidos = config
+        .plugins
+        .concedidos
+        .get(&plugin_id)
+        .ok_or_else(|| format!("el plugin '{plugin_id}' no tiene permisos concedidos"))?;
+    if !concedidos.contains(&crate::plugins::Permiso::LlmCompletar) {
+        return Err(format!(
+            "el plugin '{plugin_id}' no tiene permiso para consultar al modelo"
+        ));
+    }
+
+    let mut pedido = pedido;
+    if pedido.model.is_none() && !config.llm.model.is_empty() {
+        pedido.model = Some(config.llm.model.clone());
+    }
+
+    crate::llm::completar(
+        &presupuesto,
+        config.llm.provider,
+        config.llm.tokens_por_dia,
+        &plugin_id,
+        pedido,
+    )
+    .await
 }
