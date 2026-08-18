@@ -75,6 +75,14 @@ export default function App() {
     if (acento) void invoke('window_border', { color: acento }).catch(() => {})
   }, [acento])
 
+  // Mismo caso con el acrilico: lo pone el compositor de Windows, asi que el
+  // interruptor de Ajustes tiene que avisarle en vez de esperar un reinicio.
+  const desenfoque = config?.window.blur
+  useEffect(() => {
+    if (desenfoque === undefined) return
+    void invoke('window_blur', { blur: desenfoque }).catch(() => {})
+  }, [desenfoque])
+
   // Los perfiles propios salen del config que ya esta en memoria, no de
   // `profiles_list`. Ese comando lee el config del backend, que recien se
   // entera cuando el guardado sale del debounce: si el menu esperara por ahi,

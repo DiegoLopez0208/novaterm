@@ -123,6 +123,15 @@ pub fn window_border(app: AppHandle, color: String) {
     }
 }
 
+/// Prende o apaga el acrilico sobre la ventana viva. Antes el interruptor de
+/// Ajustes solo se leia en `setup`, asi que cambiarlo pedia reiniciar.
+#[tauri::command]
+pub fn window_blur(app: AppHandle, blur: bool) {
+    if let Some(window) = app.get_webview_window("main") {
+        crate::aplicar_efecto_de_fondo(&window, blur);
+    }
+}
+
 #[tauri::command]
 pub fn config_get(store: State<'_, ConfigStore>) -> Config {
     store.current()

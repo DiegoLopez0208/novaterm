@@ -57,6 +57,11 @@
   --linea: rgba(216, 222, 233, 0.1);
   --realce: rgba(216, 222, 233, 0.07);
   --chrome: rgba(13, 15, 24, 0.85);
+  /* App.tsx los inyecta como estilo inline con la opacidad configurada, pero
+     mientras `config` es null devuelve un .app sin `style`. Sin estos valores
+     la ventana quedaba enteramente transparente en ese hueco. */
+  --lienzo: rgba(13, 15, 24, 0.88);
+  --borde: rgba(132, 160, 198, 0.42);
   --fuente: 'Nova Mono', 'JetBrainsMono Nerd Font', Consolas, 'Simbolos Nova', monospace;
   --pad: 12px;
   --barra: 30px;
@@ -452,6 +457,14 @@ body.redimensionando * {
   background: transparent !important;
   scrollbar-width: thin;
   scrollbar-color: var(--linea) transparent;
+}
+
+/* xterm.css pinta el compositor del IME en negro solido, que sobre una ventana
+   translucida se ve como un parche opaco mientras se escribe con teclado japones
+   o chino. Mismo criterio que el viewport: el fondo lo pone el contenedor. */
+.terminal-host .xterm .composition-view {
+  background: var(--chrome);
+  color: var(--tinta);
 }
 
 /* Separa los botones de paneles de los de ventana, para que no se lean como

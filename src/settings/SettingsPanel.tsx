@@ -131,7 +131,7 @@ export function SettingsPanel({ config, onChange, onClose, onCambioSSH }: Props)
 
               <Interruptor
                 etiqueta="Desenfoque de fondo"
-                nota="se aplica al reiniciar"
+                nota="acrilico del compositor de Windows"
                 valor={config.window.blur}
                 onChange={(v) => set('window', { ...config.window, blur: v })}
               />

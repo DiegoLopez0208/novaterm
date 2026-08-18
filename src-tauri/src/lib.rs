@@ -63,7 +63,8 @@ pub fn run() {
             commands::ssh_list,
             commands::ssh_save,
             commands::ssh_delete,
-            commands::window_border
+            commands::window_border,
+            commands::window_blur
         ])
         .setup(|app| {
             // Tambien en release: sin log, un fallo al abrir el shell en el
