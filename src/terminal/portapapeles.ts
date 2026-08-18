@@ -43,3 +43,74 @@ export function decidir(evento: TeclaDePortapapeles, haySeleccion: boolean): Dec
 
   return 'al-shell'
 }
+
+/// Lo que el manejador necesita de xterm. Es un subconjunto de `Terminal` para
+/// que el test no tenga que montar una terminal de verdad.
+export interface TerminalDePortapapeles {
+  hasSelection(): boolean
+  getSelection(): string
+  clearSelection(): void
+  paste(texto: string): void
+}
+
+/// El portapapeles del navegador, aparte por la misma razon.
+export interface Portapapeles {
+  writeText(texto: string): Promise<void>
+  readText(): Promise<string>
+}
+
+/// Arma el manejador que se le pasa a `attachCustomKeyEventHandler`.
+///
+/// Vive aca y no dentro del componente porque el bug que arregla no se ve
+/// mirando el codigo: devolver `false` le dice a xterm que no procese la tecla,
+/// pero **no** cancela la accion por defecto del navegador. Ctrl+V,
+/// Ctrl+Shift+V y Shift+Insert son pegados nativos, asi que el WebView disparaba
+/// ademas un evento `paste` sobre la textarea de xterm y el texto entraba dos
+/// veces. Del lado del copiado era peor: el copy nativo corria despues de
+/// `clearSelection` y podia dejar el portapapeles vacio.
+export function crearManejador(
+  term: TerminalDePortapapeles,
+  portapapeles: Portapapeles = navigator.clipboard,
+): (evento: KeyboardEvent) => boolean {
+  return (evento) => {
+    if (evento.type !== 'keydown') return true
+
+    const decision = decidir(
+      {
+        tecla: evento.key,
+        ctrl: evento.ctrlKey,
+        shift: evento.shiftKey,
+        alt: evento.altKey,
+      },
+      term.hasSelection(),
+    )
+
+    // Ninguna tecla que resolvamos nosotros puede seguir hasta el navegador.
+    if (decision !== 'al-shell') evento.preventDefault()
+
+    if (decision === 'copiar') {
+      const seleccion = term.getSelection()
+      if (seleccion) {
+        void portapapeles.writeText(seleccion)
+        // Windows Terminal deselecciona al copiar. Sin esto, el Ctrl+C
+        // siguiente vuelve a copiar en vez de interrumpir el proceso.
+        term.clearSelection()
+      }
+      return false
+    }
+
+    if (decision === 'pegar') {
+      void portapapeles.readText().then((texto) => {
+        // term.paste y no writePty: si el programa activo pidio pegado entre
+        // corchetes, xterm envuelve el texto y vim deja de autoindentar cada
+        // linea pegada.
+        if (texto) term.paste(texto)
+      })
+      return false
+    }
+
+    // Devolver true deja pasar la tecla. Es lo que hace que Ctrl+C sin
+    // seleccion siga interrumpiendo el proceso.
+    return true
+  }
+}

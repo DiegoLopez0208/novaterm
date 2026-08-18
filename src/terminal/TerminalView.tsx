@@ -18,7 +18,7 @@ import {
 } from './ptyBridge'
 import { conSimbolos, type NovaConfig } from '../config/configBridge'
 import { EVENTO_BUSCAR } from '../acciones/registro'
-import { decidir } from './portapapeles'
+import { crearManejador } from './portapapeles'
 import { construirBienvenida, type InfoSistema } from './bienvenida'
 import { BarraBusqueda } from './BarraBusqueda'
 import { marcarActivo, olvidar, registrar } from './registro'
@@ -233,47 +233,9 @@ export function TerminalView({
       if (seleccion) void navigator.clipboard.writeText(seleccion)
     })
 
-    // Copiar y pegar como en Windows Terminal, PowerShell y CMD modernos. La
-    // regla vive en `portapapeles.ts` para poder probarla sin montar nada; aca
-    // solo se ejecuta lo que decidio.
-    term.attachCustomKeyEventHandler((evento) => {
-      if (evento.type !== 'keydown') return true
-
-      const decision = decidir(
-        {
-          tecla: evento.key,
-          ctrl: evento.ctrlKey,
-          shift: evento.shiftKey,
-          alt: evento.altKey,
-        },
-        term.hasSelection(),
-      )
-
-      if (decision === 'copiar') {
-        const seleccion = term.getSelection()
-        if (seleccion) {
-          void navigator.clipboard.writeText(seleccion)
-          // Windows Terminal deselecciona al copiar. Sin esto, el Ctrl+C
-          // siguiente vuelve a copiar en vez de interrumpir el proceso.
-          term.clearSelection()
-        }
-        return false
-      }
-
-      if (decision === 'pegar') {
-        void navigator.clipboard.readText().then((texto) => {
-          // term.paste y no writePty: si el programa activo pidio pegado entre
-          // corchetes, xterm envuelve el texto y vim deja de autoindentar cada
-          // linea pegada.
-          if (texto) term.paste(texto)
-        })
-        return false
-      }
-
-      // Devolver true deja pasar la tecla. Es lo que hace que Ctrl+C sin
-      // seleccion siga interrumpiendo el proceso.
-      return true
-    })
+    // Copiar y pegar como en Windows Terminal, PowerShell y CMD modernos. Toda
+    // la logica vive en `portapapeles.ts` para poder probarla sin montar nada.
+    term.attachCustomKeyEventHandler(crearManejador(term))
 
     // La bienvenida se escribe **antes** de abrir el PTY: asi queda arriba de
     // todo y el prompt del shell cae abajo, como si la hubiera impreso el
