@@ -266,3 +266,99 @@ fn un_shell_inexistente_da_error_en_vez_de_panic() {
 
     assert!(!err.is_empty(), "el error deberia explicar que fallo");
 }
+
+/// Sink que tarda a proposito, para llenar la cola entre el hilo lector y el
+/// agrupador.
+#[derive(Default)]
+struct SinkLento {
+    bytes: Mutex<usize>,
+}
+
+impl SinkLento {
+    fn recibidos(&self) -> usize {
+        *self.bytes.lock().unwrap()
+    }
+}
+
+impl PtySink for SinkLento {
+    fn data(&self, bytes: &[u8]) {
+        *self.bytes.lock().unwrap() += bytes.len();
+        std::thread::sleep(Duration::from_millis(20));
+    }
+
+    fn exit(&self, _code: Option<i32>) {}
+}
+
+/// La cola del PTY es un `sync_channel` acotado: cuando se llena, el hilo lector
+/// se bloquea en `send` y ConPTY frena al proceso hijo. Eso es lo que evita que
+/// un `cat` de un archivo grande apile chunks en RAM sin techo, pero abre un
+/// riesgo: si cerrar la sesion esperara a ese hilo bloqueado, cerrar una pestana
+/// con salida pesada colgaria la app entera.
+///
+/// El close corre en otro hilo y se le da un limite, asi que un bloqueo falla el
+/// test en vez de dejar la suite colgada para siempre.
+#[test]
+fn cerrar_no_se_traba_con_la_cola_llena() {
+    let manager = Arc::new(PtyManager::default());
+    let sink = Arc::new(SinkLento::default());
+    let espia = sink.clone();
+
+    // node y no un shell: powershell arranca mandando DSR y se cuelga esperando
+    // que la terminal le conteste, y cmd.exe no recibe bien la linea entre
+    // comillas. node escupe salida de entrada y se comporta igual en los dos
+    // sistemas.
+    let volcado = "for (let i = 0; i < 500000; i++) console.log(\"linea \" + i)";
+
+    let id = manager
+        .spawn(
+            "",
+            SpawnOptions {
+                shell: Some("node".to_string()),
+                args: Some(vec!["-e".to_string(), volcado.to_string()]),
+                cwd: None,
+                cols: 80,
+                rows: 24,
+            },
+            move |_| sink,
+        )
+        .expect("no se pudo abrir el PTY");
+
+    // ConPTY arranca mandando DSR y no suelta una sola linea del proceso hasta
+    // que la terminal le conteste donde esta el cursor. En la app contesta
+    // xterm.js; aca hay que hacerle de emulador, igual que en los otros tests.
+    //
+    // Y no alcanza con esperar el primer byte: ese primer byte es el DSR y para
+    // entonces no hay nada encolado. Con el sink durmiendo 20 ms por chunk,
+    // haber entregado 200 KB significa varios segundos de consumo, y para
+    // entonces el productor ya dejo la cola llena y el lector bloqueado.
+    let limite = Instant::now() + Duration::from_secs(60);
+    let mut fluyendo = false;
+    while Instant::now() < limite {
+        if espia.recibidos() > 200_000 {
+            fluyendo = true;
+            break;
+        }
+        let _ = manager.write(&id, "[1;1R");
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    assert!(
+        fluyendo,
+        "el proceso no produjo salida suficiente: {} bytes",
+        espia.recibidos()
+    );
+
+    let (aviso, espera) = std::sync::mpsc::channel();
+    let cerrador = manager.clone();
+    let id_cerrar = id.clone();
+    std::thread::spawn(move || {
+        let _ = aviso.send(cerrador.close(&id_cerrar));
+    });
+
+    let resultado = espera.recv_timeout(Duration::from_secs(20));
+    assert!(
+        resultado.is_ok(),
+        "cerrar la sesion se trabo con la cola llena"
+    );
+    resultado.unwrap().expect("el close devolvio error");
+}
+

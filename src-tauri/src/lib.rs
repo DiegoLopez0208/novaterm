@@ -68,10 +68,15 @@ pub fn run() {
         ])
         .setup(|app| {
             // Tambien en release: sin log, un fallo al abrir el shell en el
-            // binario final no deja ningun rastro para diagnosticar.
+            // binario final no deja ningun rastro para diagnosticar. Pero sin
+            // tope el archivo crece para siempre, asi que se queda solo el mas
+            // reciente y se corta al megabyte: alcanza de sobra para ver que
+            // paso en la sesion que fallo.
             app.handle().plugin(
                 tauri_plugin_log::Builder::default()
                     .level(log::LevelFilter::Info)
+                    .max_file_size(1024 * 1024)
+                    .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepOne)
                     .build(),
             )?;
 

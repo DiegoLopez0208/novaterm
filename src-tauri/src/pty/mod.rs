@@ -10,7 +10,7 @@ use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
 pub use session::{PtySession, SpawnOptions};
-pub use sink::{PtySink, TauriSink};
+pub use sink::{CanalSink, ExitPayload, PtySink};
 
 /// Duenio de todas las sesiones vivas. Las sesiones no se conocen entre si:
 /// el manager solo las indexa y las cierra; cada una maneja su propio proceso.
@@ -22,12 +22,9 @@ pub struct PtyManager {
 impl PtyManager {
     /// El id lo trae el llamador, no se genera aca.
     ///
-    /// Es lo que evita una carrera: el shell empieza a escribir apenas se abre
-    /// el PTY, asi que el frontend necesita estar escuchando `pty://{id}/data`
-    /// **antes** de pedir el spawn. Si el id se generara aca, el prompt podria
-    /// emitirse entre la respuesta y la suscripcion y la terminal quedaria en
-    /// blanco. En el build de release, que arranca sin esperar a Vite, pasaba
-    /// siempre.
+    /// El frontend lo necesita para poder cerrar la sesion antes de que el
+    /// spawn conteste. La carrera del prompt que motivaba esto la resuelve hoy
+    /// el canal, que ya existe cuando el comando llega al backend.
     pub fn spawn<F>(&self, id: &str, options: SpawnOptions, make_sink: F) -> Result<String, String>
     where
         F: FnOnce(&str) -> Arc<dyn PtySink>,

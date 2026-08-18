@@ -170,13 +170,16 @@ export function SettingsPanel({ config, onChange, onClose, onCambioSSH }: Props)
               <div className="separador" />
               <p className="grupo">Búfer</p>
 
+              {/* El tope es por panel, no por ventana: con varias pestañas
+                  divididas se multiplica. 100.000 líneas por panel llevaban el
+                  proceso a cifras absurdas sin que se notara de dónde salían. */}
               <Deslizador
                 etiqueta="Historial"
                 valor={config.terminal.scrollback}
                 min={500}
-                max={100000}
+                max={50000}
                 paso={500}
-                formato={(v) => `${v.toLocaleString('es')} líneas`}
+                formato={(v) => `${v.toLocaleString('es')} líneas por panel`}
                 onChange={(v) =>
                   set('terminal', { ...config.terminal, scrollback: Math.round(v) })
                 }

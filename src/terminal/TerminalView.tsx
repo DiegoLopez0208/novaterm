@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { MenuPanel } from '../panes/MenuPanel'
-import { Terminal, type ITheme } from '@xterm/xterm'
+import { Terminal, type IDisposable, type ITheme } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebglAddon } from '@xterm/addon-webgl'
 import { Unicode11Addon } from '@xterm/addon-unicode11'
@@ -10,8 +10,6 @@ import '@xterm/xterm/css/xterm.css'
 import {
   closePty,
   nuevoPtyId,
-  onPtyData,
-  onPtyExit,
   resizePty,
   spawnPty,
   writePty,
@@ -23,7 +21,6 @@ import { EVENTO_BUSCAR } from '../acciones/registro'
 import { decidir } from './portapapeles'
 import { construirBienvenida, type InfoSistema } from './bienvenida'
 import { BarraBusqueda } from './BarraBusqueda'
-import type { UnlistenFn } from '@tauri-apps/api/event'
 
 interface Props {
   config: NovaConfig
@@ -91,6 +88,39 @@ function rutaDesdeOsc7(dato: string): string | null {
   }
 }
 
+/** Cuanto espera un panel escondido antes de soltar su contexto de WebGL.
+ *  Alternar pestanas de ida y vuelta no deberia recrearlo en cada paso. */
+const DESCARGA_WEBGL_MS = 5000
+
+/** Renderer de WebGL: una sola superficie que se repinta entera, en vez de los
+ *  cientos de <span> del renderer del DOM. Baja el uso de CPU con salida pesada
+ *  y evita que se vean las regiones de repintado moviendose sobre una ventana
+ *  translucida.
+ *
+ *  Se descarto una vez porque con `allowTransparency` no dibujaba nada, pero
+ *  aquella version pintaba el fondo desde xterm; ahora el fondo del tema es
+ *  transparente y lo pinta el contenedor.
+ *
+ *  Cada contexto se lleva su propio atlas de glifos en memoria de video, asi que
+ *  el dueno es el efecto de `activo`: uno solo por panel visible, y un panel que
+ *  nace en segundo plano no llega a crearlo.
+ *
+ *  Devuelve null si la maquina no da WebGL; ahi queda el renderer del DOM, que
+ *  siempre funciona.
+ */
+function cargarWebgl(term: Terminal): WebglAddon | null {
+  try {
+    const webgl = new WebglAddon()
+    // Si el contexto se pierde (driver que se reinicia, GPU que se va a dormir)
+    // se descarga el addon y xterm vuelve solo al renderer del DOM.
+    webgl.onContextLoss(() => webgl.dispose())
+    term.loadAddon(webgl)
+    return webgl
+  } catch {
+    return null
+  }
+}
+
 export function TerminalView({
   config,
   profile,
@@ -108,6 +138,7 @@ export function TerminalView({
   const termRef = useRef<Terminal | null>(null)
   const fitRef = useRef<FitAddon | null>(null)
   const buscadorRef = useRef<SearchAddon | null>(null)
+  const webglRef = useRef<WebglAddon | null>(null)
   const [busqueda, setBusqueda] = useState(false)
   // La config y los callbacks viven en refs para que el efecto de arranque no
   // dependa de ellos. El padre crea funciones nuevas en cada render; si el
@@ -129,7 +160,9 @@ export function TerminalView({
 
     let disposed = false
     let ptyId: PtyId | null = null
-    const unlisteners: UnlistenFn[] = []
+    // `term.dispose()` ya deberia arrastrarlos, pero estos dos escriben al PTY:
+    // dejarlos atados a ese detalle es lo que vuelve invisible una fuga.
+    const descartables: IDisposable[] = []
     const inicial = configRef.current
 
     const term = new Terminal({
@@ -157,26 +190,6 @@ export function TerminalView({
     term.unicode.activeVersion = '11'
 
     term.open(host)
-
-    // Renderer de WebGL: una sola superficie que se repinta entera, en vez de
-    // los cientos de <span> del renderer del DOM. Es lo que baja el uso de CPU
-    // con salida pesada y lo que evita que se vean las regiones de repintado
-    // moviendose sobre una ventana translucida.
-    //
-    // Se descarto una vez porque con `allowTransparency` no dibujaba nada, pero
-    // aquella version pintaba el fondo desde xterm; ahora el fondo del tema es
-    // transparente y lo pinta el contenedor. Si el contexto se pierde (driver
-    // que se reinicia, GPU que se va a dormir) se descarga el addon y xterm
-    // vuelve solo al renderer del DOM.
-    if (inicial.terminal.gpu) {
-      try {
-        const webgl = new WebglAddon()
-        webgl.onContextLoss(() => webgl.dispose())
-        term.loadAddon(webgl)
-      } catch {
-        // Sin WebGL disponible queda el renderer del DOM, que siempre funciona.
-      }
-    }
 
     fit.fit()
     termRef.current = term
@@ -267,44 +280,46 @@ export function TerminalView({
     }
 
     const start = async () => {
-      // Escuchar primero y abrir despues. Al reves se pierde el prompt: el
-      // shell escribe apenas existe el PTY, sin esperar a que haya alguien del
-      // otro lado.
+      // El id se sabe de antemano para poder cerrar la sesion si el panel se
+      // desmonta antes de que el spawn conteste.
       const id = nuevoPtyId()
       ptyId = id
       ptyRef.current = id
 
       await bienvenida()
 
-      unlisteners.push(await onPtyData(id, (bytes) => term.write(bytes)))
-      unlisteners.push(
-        await onPtyExit(id, ({ code }) => {
+      // Los dos callbacks viajan con el spawn como canales de IPC, asi que ya
+      // estan escuchando cuando el backend abre el PTY: no hay ventana en la
+      // que el prompt se emita sin nadie del otro lado.
+      await spawnPty(
+        id,
+        {
+          ...perfilRef.current,
+          cols: term.cols,
+          rows: term.rows,
+        },
+        (bytes) => term.write(bytes),
+        ({ code }) => {
           term.write(
             `\r\n\x1b[38;5;244m[proceso terminado: ${code ?? 'sin codigo'}]\x1b[0m\r\n`,
           )
           onExitRef.current?.(code)
-        }),
+        },
       )
-
-      if (disposed) return
-
-      await spawnPty(id, {
-        ...perfilRef.current,
-        cols: term.cols,
-        rows: term.rows,
-      })
 
       if (disposed) {
         void closePty(id)
         return
       }
 
-      term.onData((data) => {
-        void writePty(id, data)
-      })
-      term.onResize(({ cols, rows }) => {
-        void resizePty(id, cols, rows)
-      })
+      descartables.push(
+        term.onData((data) => {
+          void writePty(id, data)
+        }),
+        term.onResize(({ cols, rows }) => {
+          void resizePty(id, cols, rows)
+        }),
+      )
 
       term.focus()
     }
@@ -325,8 +340,10 @@ export function TerminalView({
     return () => {
       disposed = true
       observer.disconnect()
-      unlisteners.forEach((un) => un())
+      descartables.forEach((d) => d.dispose())
       if (ptyId) void closePty(ptyId)
+      webglRef.current?.dispose()
+      webglRef.current = null
       term.dispose()
       termRef.current = null
       fitRef.current = null
@@ -378,6 +395,35 @@ export function TerminalView({
     }, 0)
     return () => window.clearTimeout(id)
   }, [activo])
+
+  // Un contexto de WebGL, con su atlas de glifos, se paga en memoria aunque el
+  // panel este escondido. Las pestanas inactivas quedan montadas a proposito
+  // ---desmontarlas mataria su shell---, asi que con varias abiertas se
+  // acumulaba un contexto por panel para uno solo visible. Soltarlo no toca ni
+  // el PTY ni el scrollback: xterm sigue dibujando con el renderer del DOM
+  // hasta que el panel vuelve al frente.
+  useEffect(() => {
+    const term = termRef.current
+    if (!term) return
+
+    const soltar = () => {
+      webglRef.current?.dispose()
+      webglRef.current = null
+    }
+
+    if (!config.terminal.gpu) {
+      soltar()
+      return
+    }
+
+    if (activo) {
+      if (!webglRef.current) webglRef.current = cargarWebgl(term)
+      return
+    }
+
+    const id = window.setTimeout(soltar, DESCARGA_WEBGL_MS)
+    return () => window.clearTimeout(id)
+  }, [activo, config.terminal.gpu])
 
   // Solo el panel activo abre la busqueda. El pedido llega por evento del DOM
   // desde el atajo global, que no tiene forma de alcanzar esta instancia.

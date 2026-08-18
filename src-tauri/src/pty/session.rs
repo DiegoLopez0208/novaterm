@@ -66,14 +66,21 @@ impl PtySession {
 
         // Leer y emitir van en hilos distintos, con la salida agrupada en el
         // medio. ConPTY devuelve pedazos chicos —a veces una linea— y cada uno
-        // cruzaba el puente como un evento propio: JSON, base64 y una vuelta
-        // por el bucle de eventos del webview por cada pedacito. Con salida
-        // pesada eso era casi todo el costo.
+        // cruzaba el puente como un mensaje propio, con su vuelta por el bucle
+        // de eventos del webview. Con salida pesada eso era casi todo el costo.
         //
         // El agrupador junta lo que llegue mientras siga llegando y corta al
         // primer respiro o al llenarse. La demora que agrega es menos de un
         // cuadro, asi que no se nota al escribir.
-        let (tx, rx) = std::sync::mpsc::channel::<Vec<u8>>();
+        //
+        // La cola entre los dos hilos va acotada a proposito. Sin limite, un
+        // `cat` de un archivo grande o un build ruidoso hacen que el lector
+        // empuje mas rapido de lo que el puente puede emitir y los chunks se
+        // apilan sin techo: la RAM sube y no vuelve. Llena, `send` bloquea al
+        // lector, el pipe se llena y ConPTY frena al proceso hijo, que es como
+        // debe comportarse una terminal. 256 chunks de 8 KB = 2 MB de cola.
+        const COLA: usize = 256;
+        let (tx, rx) = std::sync::mpsc::sync_channel::<Vec<u8>>(COLA);
 
         std::thread::spawn(move || {
             let mut buf = [0u8; 8192];

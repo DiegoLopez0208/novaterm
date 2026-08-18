@@ -1,12 +1,13 @@
 use std::sync::Arc;
 
+use tauri::ipc::{Channel, InvokeResponseBody};
 use tauri::{AppHandle, Manager, State};
 
 use crate::config::{Config, ConfigStore};
 use crate::plugins::{descubrir, directorio_plugins, ejecutar_widget, Plugin, WidgetPlugin};
 use crate::profiles::{combinar, DeteccionCache, Profile};
 use crate::ssh;
-use crate::pty::{PtyManager, PtySink, SpawnOptions, TauriSink};
+use crate::pty::{CanalSink, ExitPayload, PtyManager, PtySink, SpawnOptions};
 use crate::stats::{info_sistema, InfoSistema, Monitor, Stats};
 
 /// El orden es el de prioridad: lo tuyo primero, despues lo que aportan los
@@ -156,13 +157,14 @@ pub fn config_reload(store: State<'_, ConfigStore>) -> Result<Config, String> {
 
 #[tauri::command]
 pub fn pty_spawn(
-    app: AppHandle,
     manager: State<'_, PtyManager>,
     id: String,
     options: SpawnOptions,
+    on_data: Channel<InvokeResponseBody>,
+    on_exit: Channel<ExitPayload>,
 ) -> Result<String, String> {
-    manager.spawn(&id, options, |id| {
-        Arc::new(TauriSink::new(app.clone(), id)) as Arc<dyn PtySink>
+    manager.spawn(&id, options, move |_id| {
+        Arc::new(CanalSink::new(on_data, on_exit)) as Arc<dyn PtySink>
     })
 }
 
