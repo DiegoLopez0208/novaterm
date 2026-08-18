@@ -1,4 +1,5 @@
 mod commands;
+pub mod memoria;
 #[cfg(test)]
 mod tests_color;
 
@@ -117,13 +118,29 @@ pub fn run() {
 
     // Sin esto los shells quedan vivos despues de cerrar la ventana: soltar el
     // master del PTY no mata al proceso hijo.
-    app.run(|handle, event| {
-        if let RunEvent::WindowEvent {
-            event: WindowEvent::Destroyed,
-            ..
-        } = event
-        {
-            handle.state::<PtyManager>().close_all();
+    // El vigilante de memoria vive fuera del closure porque tiene que sobrevivir
+    // entre eventos: es el que sabe si el foco que se perdio hace veinte
+    // segundos sigue perdido.
+    let vigilante = std::sync::Arc::new(memoria::Vigilante::default());
+
+    app.run(move |handle, event| {
+        let RunEvent::WindowEvent { label, event, .. } = &event else {
+            return;
+        };
+
+        match event {
+            WindowEvent::Destroyed => handle.state::<PtyManager>().close_all(),
+            WindowEvent::Focused(enfocada) => {
+                let Some(window) = handle.get_webview_window(label) else {
+                    return;
+                };
+                if *enfocada {
+                    vigilante.recupero_foco(&window);
+                } else {
+                    vigilante.perdio_foco(window);
+                }
+            }
+            _ => {}
         }
     });
 }

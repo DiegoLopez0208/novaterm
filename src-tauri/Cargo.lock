@@ -80,6 +80,8 @@ dependencies = [
  "tauri-plugin-log",
  "toml 1.1.4+spec-1.1.0",
  "uuid",
+ "webview2-com",
+ "windows",
  "windows-sys 0.61.2",
 ]
 

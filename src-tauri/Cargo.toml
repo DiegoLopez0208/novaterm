@@ -41,6 +41,13 @@ windows-sys = { version = "0.61.2", features = [
 ] }
 sysinfo = { version = "0.36.1", default-features = false, features = ["system"] }
 
+# Solo Windows: ICoreWebView2_19::SetMemoryUsageTargetLevel, para que el webview
+# suelte caches cuando la ventana lleva rato sin foco. Las dos ya venian como
+# dependencias transitivas de tauri; se declaran para poder usarlas directo.
+[target."cfg(windows)".dependencies]
+webview2-com = "0.38.2"
+windows = { version = "0.61", features = [] }
+
 
 # El binario se distribuye, no se depura: conviene que sea chico y rapido de
 # cargar. `lto` y un solo codegen-unit dejan optimizar entre crates, y sin

@@ -62,6 +62,8 @@ pub fn window_ready(app: AppHandle, store: State<'_, ConfigStore>) {
     let config = store.current();
     crate::aplicar_efecto_de_fondo(&ventana, config.window.blur);
     crate::aplicar_bordes(&ventana, crate::hex_a_rgb(&config.colors.normal.blue));
+
+    crate::memoria::purga_inicial(ventana);
 }
 
 #[tauri::command]
