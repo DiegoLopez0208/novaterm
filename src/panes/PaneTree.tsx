@@ -59,6 +59,7 @@ export function PaneTree({
           >
             <TerminalView
               config={config}
+              panelId={ubicado.id}
               profile={ubicado.perfil}
               activo={esActivo && visible}
               puedeCerrarPanel={paneles.length > 1}

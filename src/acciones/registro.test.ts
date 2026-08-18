@@ -116,6 +116,7 @@ const contextoDePrueba = (): Contexto => ({
   cerrarPanel: () => {},
   moverPanel: () => {},
   abrirAjustes: () => {},
+  abrirPlugins: () => {},
   alternarPaleta: () => {},
   buscar: () => {},
   pantallaCompleta: () => {},

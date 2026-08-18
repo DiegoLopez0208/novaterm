@@ -21,9 +21,13 @@ import { EVENTO_BUSCAR } from '../acciones/registro'
 import { decidir } from './portapapeles'
 import { construirBienvenida, type InfoSistema } from './bienvenida'
 import { BarraBusqueda } from './BarraBusqueda'
+import { marcarActivo, olvidar, registrar } from './registro'
 
 interface Props {
   config: NovaConfig
+  /** Identifica al panel en el registro de terminales vivas, del que se sirven
+   *  los plugins para leer y escribir en la sesion que esta a la vista. */
+  panelId: string
   profile?: Pick<SpawnOptions, 'shell' | 'args' | 'cwd'>
   /** Panel visible y seleccionado. Al volver a serlo hay que remedir y enfocar. */
   activo?: boolean
@@ -123,6 +127,7 @@ function cargarWebgl(term: Terminal): WebglAddon | null {
 
 export function TerminalView({
   config,
+  panelId,
   profile,
   activo = true,
   puedeCerrarPanel = false,
@@ -146,6 +151,11 @@ export function TerminalView({
   // en bucle y la terminal nunca mostraria nada.
   const configRef = useRef(config)
   configRef.current = config
+  // PaneTree usa el mismo id como `key`, asi que en la practica no cambia
+  // nunca para una instancia dada; la ref esta para que el efecto de arranque
+  // pueda seguir sin dependencias, que es lo que evita que reabra el shell.
+  const panelIdRef = useRef(panelId)
+  panelIdRef.current = panelId
   const perfilRef = useRef(profile)
   const onTitleRef = useRef(onTitle)
   onTitleRef.current = onTitle
@@ -321,6 +331,7 @@ export function TerminalView({
         }),
       )
 
+      registrar(panelIdRef.current, { term, ptyId: id })
       term.focus()
     }
 
@@ -339,6 +350,7 @@ export function TerminalView({
 
     return () => {
       disposed = true
+      olvidar(panelIdRef.current)
       observer.disconnect()
       descartables.forEach((d) => d.dispose())
       if (ptyId) void closePty(ptyId)
@@ -382,6 +394,7 @@ export function TerminalView({
   // que no existen.
   useEffect(() => {
     if (!activo) return
+    marcarActivo(panelId)
     const term = termRef.current
     if (!term) return
 
@@ -394,7 +407,7 @@ export function TerminalView({
       term.focus()
     }, 0)
     return () => window.clearTimeout(id)
-  }, [activo])
+  }, [activo, panelId])
 
   // Un contexto de WebGL, con su atlas de glifos, se paga en memoria aunque el
   // panel este escondido. Las pestanas inactivas quedan montadas a proposito

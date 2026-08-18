@@ -208,3 +208,34 @@ fn los_ids_peligrosos_se_rechazan() {
     assert!(!id_valido("con espacio"));
     assert!(!id_valido(&"x".repeat(65)));
 }
+
+/// Valores de oro producidos por PyNaCl, que es lo que usa la herramienta de
+/// empaquetado del registro.
+///
+/// Las dos mitades de esto viven en repos distintos y en lenguajes distintos: si
+/// alguna cambia de biblioteca, de codificacion o de variante de Ed25519, nadie
+/// se entera hasta que un usuario no puede instalar nada. Este test es el unico
+/// lugar donde las dos se tocan.
+///
+/// Reproducible con:
+///   from nacl.signing import SigningKey
+///   k = SigningKey(bytes([7])*32)
+///   k.sign(b"paquete de prueba entre python y rust").signature.hex()
+#[test]
+fn el_verificador_acepta_una_firma_hecha_por_la_herramienta_en_python() {
+    let paquete = b"paquete de prueba entre python y rust";
+
+    let version = Version {
+        version: "1.0.0".into(),
+        url: String::new(),
+        sha256: "9d6f669a5733277cc67d8295690fb57d7cec917ce72ab6b75ceb1a9f3cacf91a".into(),
+        firma: concat!(
+            "043d0d518cd02ac1354a423eaf044ba57c249acd65d0fa0761e6cdf5f94a7e8a",
+            "942d9924168ffd02893b9429d7b8232f1621a9ae368018284371899ff9472609"
+        )
+        .into(),
+    };
+    let clave = "ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c";
+
+    verificar(paquete, &version, clave).expect("Rust deberia aceptar lo que firma PyNaCl");
+}

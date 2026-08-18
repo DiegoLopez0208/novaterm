@@ -19,6 +19,8 @@ import { StatusBar } from './status/StatusBar'
 import { useTabs } from './tabs/useTabs'
 import { coincide, construirAcciones, EVENTO_BUSCAR } from './acciones/registro'
 import { hojas } from './tabs/modelo'
+import { instalarBroker } from './plugins/host'
+import type { Plugin } from './plugins/tipos'
 
 // Ninguno de los dos se ve al arrancar, y juntos arrastran los presets de temas
 // y el editor de SSH. Fuera del bundle inicial son menos JS que parsear antes
@@ -28,6 +30,15 @@ const SettingsPanel = lazy(() =>
 )
 const CommandPalette = lazy(() =>
   import('./palette/CommandPalette').then((m) => ({ default: m.CommandPalette })),
+)
+// El catalogo trae el cliente del registro y la pantalla de consentimiento, y no
+// se ve hasta que alguien lo pide. El panel de plugin, igual: sin plugins con
+// panel, el iframe y su puente no tienen por que estar en el bundle inicial.
+const MarketplacePanel = lazy(() =>
+  import('./marketplace/MarketplacePanel').then((m) => ({ default: m.MarketplacePanel })),
+)
+const PanelPlugin = lazy(() =>
+  import('./plugins/PanelPlugin').then((m) => ({ default: m.PanelPlugin })),
 )
 
 /// El mismo valor que `defaults.rs`. Es a donde vuelve Ctrl+0.
@@ -46,6 +57,10 @@ export interface Profile {
 
 export default function App() {
   const [ajustes, setAjustes] = useState(false)
+  const [mercado, setMercado] = useState(false)
+  /// Cual plugin tiene el panel abierto. Uno solo por vez: son iframes, y tener
+  /// varios vivos cuesta lo mismo que tener varias pestanas.
+  const [panelAbierto, setPanelAbierto] = useState<string | null>(null)
   const [paleta, setPaleta] = useState(false)
   const [perfiles, setPerfiles] = useState<Profile[]>([])
   const [cwd, setCwd] = useState<string | null>(null)
@@ -67,6 +82,21 @@ export default function App() {
   }, [])
 
   useEffect(recargarPerfiles, [recargarPerfiles])
+
+  // Un solo escucha de `message` para todos los plugins, montado una vez. Es la
+  // frontera del sandbox: sin esto, los iframes hablan y nadie los atiende.
+  useEffect(instalarBroker, [])
+
+  // Los plugins con panel se cargan una vez y se refrescan al instalar o
+  // desinstalar; `plugins_list` lanza un proceso por widget, no conviene
+  // llamarlo en cada render.
+  const [plugins, setPlugins] = useState<Plugin[]>([])
+  const recargarPlugins = useCallback(() => {
+    void invoke<Plugin[]>('plugins_list')
+      .then(setPlugins)
+      .catch(() => setPlugins([]))
+  }, [])
+  useEffect(recargarPlugins, [recargarPlugins])
 
   // El borde de la ventana lo dibuja el compositor, no el HTML, asi que hay que
   // avisarle cada vez que cambia el color de acento del tema.
@@ -124,6 +154,7 @@ export default function App() {
             cerrarPanel: tabs.cerrarPanelActivo,
             moverPanel: (delta) => tabs.moverPanel(delta > 0 ? 1 : -1),
             abrirAjustes: () => setAjustes((v) => !v),
+            abrirPlugins: () => setMercado(true),
             alternarPaleta: () => setPaleta((v) => !v),
             buscar: () => window.dispatchEvent(new CustomEvent(EVENTO_BUSCAR)),
             pantallaCompleta: () => {
@@ -227,6 +258,18 @@ export default function App() {
     '--pad': `${config.window.padding}px`,
   } as CSSProperties
 
+  // Un plugin solo puede montar su panel si declara `entry`, si trae el permiso
+  // `ui.panel` en el manifiesto y si el usuario ademas se lo concedio. Las tres
+  // condiciones: declarar no es pedir, y pedir no es tener.
+  const conPanel =
+    plugins.find(
+      (p) =>
+        p.id === panelAbierto &&
+        p.entry &&
+        p.permissions.includes('ui.panel') &&
+        (config.plugins.concedidos[p.id] ?? []).includes('ui.panel'),
+    ) ?? null
+
   const titulo = tabs.actual.alias ?? nombreCorto(tabs.actual.titulo)
 
   return (
@@ -303,6 +346,28 @@ export default function App() {
       {paleta && (
         <Suspense fallback={null}>
           <CommandPalette acciones={acciones} onCerrar={() => setPaleta(false)} />
+        </Suspense>
+      )}
+
+      {mercado && (
+        <Suspense fallback={null}>
+          <MarketplacePanel
+            onCerrar={() => {
+              setMercado(false)
+              recargarPlugins()
+            }}
+          />
+        </Suspense>
+      )}
+
+      {conPanel && (
+        <Suspense fallback={null}>
+          <PanelPlugin
+            plugin={conPanel}
+            concedidos={config.plugins.concedidos[conPanel.id] ?? []}
+            confianza={config.plugins.de_confianza.includes(conPanel.id)}
+            onCerrar={() => setPanelAbierto(null)}
+          />
         </Suspense>
       )}
     </div>

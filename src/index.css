@@ -1292,3 +1292,217 @@ body.redimensionando * {
   width: 7px;
   height: 7px;
 }
+
+/* Panel de plugin. Es un iframe con origen nulo: no se le puede aplicar estilo
+   desde aca, asi que lo unico que se define es su marco. Lo de adentro lo pinta
+   el documento que arma PanelPlugin. */
+.panel-plugin {
+  position: absolute;
+  top: var(--pad);
+  right: var(--pad);
+  bottom: var(--pad);
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  background: var(--chrome);
+  border: 1px solid var(--linea);
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 40;
+}
+
+.panel-plugin header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px 6px 12px;
+  border-bottom: 1px solid var(--linea);
+  font-size: 11px;
+  color: var(--tenue);
+}
+
+.panel-plugin header button {
+  background: none;
+  border: 0;
+  color: var(--tenue);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.panel-plugin header button:hover {
+  background: var(--realce);
+  color: var(--tinta);
+}
+
+.panel-plugin iframe {
+  flex: 1;
+  border: 0;
+  width: 100%;
+  background: transparent;
+}
+
+.error-plugin {
+  margin: 12px;
+  color: var(--tenue);
+  font-size: 11px;
+}
+
+/* Catalogo de plugins */
+.marketplace {
+  width: min(680px, 92vw);
+  max-height: 76vh;
+  margin: 8vh auto 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--chrome);
+  border: 1px solid var(--linea);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.marketplace header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--linea);
+}
+
+.marketplace h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.marketplace header button {
+  background: none;
+  border: 0;
+  color: var(--tenue);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.marketplace .buscador {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--linea);
+}
+
+.marketplace .buscador input {
+  flex: 1;
+  background: var(--realce);
+  border: 1px solid var(--linea);
+  border-radius: 6px;
+  color: var(--tinta);
+  font: inherit;
+  padding: 6px 8px;
+}
+
+.marketplace button[type='submit'],
+.marketplace .acciones button {
+  background: var(--realce);
+  border: 1px solid var(--linea);
+  border-radius: 6px;
+  color: var(--tinta);
+  font: inherit;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.marketplace .estado {
+  margin: 0;
+  padding: 8px 14px;
+  font-size: 11px;
+  color: var(--tenue);
+  border-bottom: 1px solid var(--linea);
+}
+
+.marketplace .catalogo {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+}
+
+.marketplace .catalogo li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--linea);
+}
+
+.marketplace .catalogo p {
+  margin: 3px 0 0;
+  font-size: 11px;
+  color: var(--tenue);
+}
+
+.marketplace .catalogo button {
+  background: var(--realce);
+  border: 1px solid var(--linea);
+  border-radius: 6px;
+  color: var(--tinta);
+  font: inherit;
+  padding: 5px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.marketplace .vacio {
+  justify-content: center;
+  color: var(--tenue);
+  font-size: 11px;
+}
+
+.marketplace .consentimiento {
+  padding: 14px;
+  overflow-y: auto;
+}
+
+.marketplace .consentimiento h3 {
+  margin: 0 0 4px;
+  font-size: 13px;
+}
+
+.marketplace .permisos {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+}
+
+.marketplace .permisos li {
+  padding: 5px 0;
+}
+
+.marketplace .permisos label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* Los permisos que dan acceso a la terminal se marcan: son los que ejecutan y
+   los que leen lo que hay en pantalla. */
+.marketplace .delicado,
+.marketplace .delicado span {
+  color: #e2a478;
+}
+
+.marketplace .aviso,
+.marketplace .sin-permisos {
+  margin: 10px 0 0;
+  font-size: 11px;
+  color: var(--tenue);
+}
+
+.marketplace .acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}

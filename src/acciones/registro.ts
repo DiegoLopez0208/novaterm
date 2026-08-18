@@ -39,6 +39,7 @@ export interface Contexto {
   cerrarPanel: () => void
   moverPanel: (delta: number) => void
   abrirAjustes: () => void
+  abrirPlugins: () => void
   alternarPaleta: () => void
   buscar: () => void
   pantallaCompleta: () => void
@@ -141,6 +142,12 @@ export function construirAcciones(ctx: Contexto): Accion[] {
       grupo: 'Pestañas',
       combo: COMBOS['pestana.nueva'],
       ejecutar: () => ctx.nuevaPestana(),
+    },
+    {
+      id: 'plugins.abrir',
+      titulo: 'Plugins: abrir el catálogo',
+      grupo: 'Plugins',
+      ejecutar: ctx.abrirPlugins,
     },
     {
       id: 'pestana.duplicar',

@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core'
+import type { Permiso, Proveedor } from '../plugins/tipos'
 import { listen, type UnlistenFn } from '@tauri-apps/api/event'
 
 // Los nombres van en snake_case porque asi los serializa serde del lado Rust.
@@ -67,6 +68,23 @@ export interface NovaConfig {
     bright: Palette
   }
   profiles: PerfilPropio[]
+  llm: LlmConfig
+  plugins: PluginsConfig
+}
+
+export interface LlmConfig {
+  provider: Proveedor
+  /// Vacio significa "el que el proveedor traiga por defecto".
+  model: string
+  tokens_por_dia: number
+}
+
+export interface PluginsConfig {
+  /// Permisos que el usuario aprobo, por id de plugin. Uno que no este aca se
+  /// rechaza aunque el manifiesto lo declare: instalar no es aprobar.
+  concedidos: Record<string, Permiso[]>
+  de_confianza: string[]
+  registro: string
 }
 
 export function getConfig(): Promise<NovaConfig> {
