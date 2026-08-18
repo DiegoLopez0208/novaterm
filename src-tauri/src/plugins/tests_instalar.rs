@@ -239,3 +239,44 @@ fn el_verificador_acepta_una_firma_hecha_por_la_herramienta_en_python() {
 
     verificar(paquete, &version, clave).expect("Rust deberia aceptar lo que firma PyNaCl");
 }
+
+/// Ciclo completo contra el registro de verdad: pide la ficha, baja el paquete,
+/// verifica sha256 y firma, y lo deja instalado.
+///
+/// Va marcado como ignorado porque necesita el registro levantado. Es la unica
+/// prueba que cubre la costura entre los dos repos ---el formato del catalogo,
+/// el nombre de los campos, la codificacion de la firma--- y ahi es donde un
+/// cambio de un lado rompe al otro sin que ningun test unitario se entere.
+///
+///   cd ../../novaterm-registry && uv run uvicorn app.main:app --port 8787
+///   cargo test --lib se_instala_desde_el_registro -- --ignored --nocapture
+#[test]
+#[ignore = "necesita el registro corriendo en 127.0.0.1:8787"]
+fn se_instala_desde_el_registro() {
+    let base = "http://127.0.0.1:8787";
+    let dir = carpeta_temporal("instalar-e2e");
+    std::fs::create_dir_all(&dir).unwrap();
+
+    let resultado = tauri::async_runtime::block_on(async {
+        let ficha = super::instalar::detalle(base, "explicame").await?;
+        let version = ficha
+            .versions
+            .last()
+            .cloned()
+            .ok_or_else(|| "el registro no ofrece ninguna version".to_string())?;
+        super::instalar::instalar(&ficha, &version, &dir).await
+    });
+
+    let carpeta = resultado.expect("deberia instalar");
+    assert!(carpeta.join("plugin.toml").is_file(), "falta el manifiesto");
+    assert!(carpeta.join("index.js").is_file(), "falta el entry");
+
+    // Y el manifiesto instalado tiene que pasar la validacion del cargador, no
+    // solo estar ahi.
+    let plugin = super::leer_manifiesto(&carpeta.join("plugin.toml")).expect("manifiesto valido");
+    assert_eq!(plugin.id, "explicame");
+    assert_eq!(plugin.entry.as_deref(), Some("index.js"));
+    assert!(plugin.permissions.contains(&super::Permiso::TerminalLeer));
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
