@@ -1,47 +1,100 @@
-// Parche de @xterm/addon-webgl, aplicado por el postinstall.
+// Arregla los rectangulos negros del renderer WebGL de xterm.
 //
-// El renderer WebGL de xterm pinta un rectangulo de fondo por cada tramo de
-// celdas cuya palabra `bg` no sea cero. Pero en xterm 6 esa palabra no guarda
-// solo el color: tambien lleva los flags de estilo ITALIC, DIM, HAS_EXTENDED
-// (subrayados y OSC 8), INVISIBLE y OVERLINE. Una celda en italica con fondo
-// por defecto hace bg !== 0, dispara el rectangulo, y el rectangulo se pinta
-// con `theme.background` --- que en NovaTerm es 'rgba(0, 0, 0, 0)' porque el
-// fondo lo pinta el contenedor (ver construirTema en src/terminal/TerminalView.tsx).
-// El addon toma el RGB de ese color (0,0,0) pero fuerza el alpha a 1, asi que
-// sale una caja NEGRA OPACA del alto exacto de la celda: el "bordeado negro",
-// que ademas tapa la transparencia de la ventana.
+// El sintoma: cualquier texto con negrita, cursiva, tenue, subrayado o tachado
+// aparecia con una caja negra opaca detras, del alto de la celda y a veces
+// hasta el borde derecho. Sobre una ventana translucida se veia como una franja
+// negra. Se nota muchisimo con Claude Code, que usa cursiva y fondos de ancho
+// completo.
 //
-// El arreglo es mirar el color-mode (CM_MASK = 0x3000000) en vez de la palabra
-// entera. Asi el rectangulo se emite solo cuando el fondo tiene un color de
-// verdad; el caso de video inverso sigue cubierto por la segunda mitad de la
-// guarda, que usa la palabra `fg`.
+// Son dos bugs encadenados en `RectangleRenderer`:
 //
-// De paso, el canvas se crea con premultipliedAlpha implicito en true mientras
-// el blend es blendFunc(SRC_ALPHA, ONE_MINUS_SRC_ALPHA), que es la formula de
-// alpha directo. Ese desajuste deja un halo oscuro en los bordes antialiaseados
-// de los glifos sobre fondo transparente.
+//  1. `updateBackgrounds` emite un rectangulo cuando la palabra `bg` no es cero,
+//     sin mirar el color-mode (CM_MASK = 0x3000000 = 50331648). En xterm 6 esa
+//     palabra tambien guarda flags de estilo (ITALIC, DIM, HAS_EXTENDED...), asi
+//     que un tramo en cursiva con fondo por defecto ya dispara el rectangulo.
 //
-// Se parchea el bundle en vez de usar patch-package porque el archivo es una
-// sola linea de ~700 KB: el .patch resultante pesaba 495 KB y era inrevisable.
+//  2. `_updateRectangle` arma el color y despues pisa el alpha con 1. Con fondo
+//     por defecto el color es `colors.background.rgba`, que en NovaTerm vale
+//     rgba(0,0,0,0): RGB negro con alpha cero. Forzado a alpha 1 queda negro
+//     opaco. Al usar el alpha real, un fondo transparente no pinta nada.
+//
+//     Ojo con el caso de color RGB verdadero (`case 50331648`): arma el color
+//     como `(palabra & 0xFFFFFF) << 8`, que deja el alpha en cero porque nunca
+//     se usaba. Con el alpha real hay que completarlo a 255 o los fondos de 24
+//     bits dejarian de pintarse.
+//
+// Se parchean los dos archivos del paquete. `main` es el CommonJS y `module` el
+// ESM; Vite resuelve por `module`, asi que parchear solo uno deja el bug vivo en
+// la app aunque el otro archivo se vea arreglado. Ese fue exactamente el error
+// de la primera version de este script.
+//
+// Se parchea el bundle en vez de usar patch-package porque cada archivo es una
+// sola linea de cientos de KB: el .patch resultante pesaba 495 KB y era
+// inrevisable.
 
 import { readFileSync, writeFileSync } from 'node:fs'
 
-const RUTA = 'node_modules/@xterm/addon-webgl/lib/addon-webgl.js'
 const VERSION_ESPERADA = '0.19.0'
 
-/** @type {{ nombre: string, de: string, a: string, veces: number }[]} */
-const CAMBIOS = [
+/** @type {{ archivo: string, cambios: { nombre: string, de: string, a: string, veces: number }[] }[]} */
+const OBJETIVOS = [
   {
-    nombre: 'guarda de color-mode en updateBackgrounds',
-    de: '(0!==a||h&&0!==l)',
-    a: '(0!==(50331648&a)||h&&0!==l)',
-    veces: 2,
+    archivo: 'node_modules/@xterm/addon-webgl/lib/addon-webgl.mjs',
+    cambios: [
+      {
+        nombre: 'guarda de color-mode en updateBackgrounds',
+        de: '(u!==0||d&&c!==0)',
+        a: '((u&50331648)!==0||d&&c!==0)',
+        veces: 2,
+      },
+      {
+        nombre: 'alpha del color RGB verdadero (fg y bg)',
+        de: '<<8;break;case 0:default:xe=this._themeService.colors.',
+        a: '<<8|255;break;case 0:default:xe=this._themeService.colors.',
+        veces: 2,
+      },
+      {
+        nombre: 'alpha real del rectangulo',
+        de: 'Vn=1,this._addRectangle(',
+        a: 'Vn=(xe&255)/255,this._addRectangle(',
+        veces: 1,
+      },
+      {
+        nombre: 'premultipliedAlpha del contexto WebGL2',
+        de: '{antialias:!1,depth:!1,preserveDrawingBuffer:c}',
+        a: '{antialias:!1,depth:!1,premultipliedAlpha:!1,preserveDrawingBuffer:c}',
+        veces: 1,
+      },
+    ],
   },
   {
-    nombre: 'premultipliedAlpha del contexto WebGL2',
-    de: '{antialias:!1,depth:!1,preserveDrawingBuffer:v}',
-    a: '{antialias:!1,depth:!1,premultipliedAlpha:!1,preserveDrawingBuffer:v}',
-    veces: 1,
+    archivo: 'node_modules/@xterm/addon-webgl/lib/addon-webgl.js',
+    cambios: [
+      {
+        nombre: 'guarda de color-mode en updateBackgrounds',
+        de: '(0!==a||h&&0!==l)',
+        a: '(0!==(50331648&a)||h&&0!==l)',
+        veces: 2,
+      },
+      {
+        nombre: 'alpha del color RGB verdadero (fg y bg)',
+        de: ')<<8;break;default:h=this._themeService.colors.',
+        a: ')<<8|255;break;default:h=this._themeService.colors.',
+        veces: 2,
+      },
+      {
+        nombre: 'alpha real del rectangulo',
+        de: 'g=1,this._addRectangle(',
+        a: 'g=(h&255)/255,this._addRectangle(',
+        veces: 1,
+      },
+      {
+        nombre: 'premultipliedAlpha del contexto WebGL2',
+        de: '{antialias:!1,depth:!1,preserveDrawingBuffer:v}',
+        a: '{antialias:!1,depth:!1,premultipliedAlpha:!1,preserveDrawingBuffer:v}',
+        veces: 1,
+      },
+    ],
   },
 ]
 
@@ -60,29 +113,31 @@ if (version !== VERSION_ESPERADA) {
   )
 }
 
-let fuente = readFileSync(RUTA, 'utf8')
-const hechos = []
+for (const { archivo, cambios } of OBJETIVOS) {
+  let texto = readFileSync(archivo, 'utf8')
+  const hechos = []
 
-for (const cambio of CAMBIOS) {
-  const pendientes = contar(fuente, cambio.de)
-  const yaAplicados = contar(fuente, cambio.a)
+  for (const { nombre, de, a, veces } of cambios) {
+    const yaEsta = contar(texto, a)
+    if (yaEsta === veces) continue
 
-  if (pendientes === 0 && yaAplicados >= cambio.veces) continue // idempotente
+    const encontrados = contar(texto, de)
+    if (encontrados !== veces) {
+      throw new Error(
+        `parchear-webgl: en ${archivo} se esperaban ${veces} ocurrencias de "${nombre}" ` +
+          `y hay ${encontrados}. El bundle cambio: revisar el parche a mano.`,
+      )
+    }
 
-  if (pendientes !== cambio.veces) {
-    throw new Error(
-      `parchear-webgl: "${cambio.nombre}" aparece ${pendientes} veces y se esperaban ` +
-        `${cambio.veces}. El bundle cambio; no se aplica nada.`,
-    )
+    texto = texto.split(de).join(a)
+    hechos.push(nombre)
   }
 
-  fuente = fuente.split(cambio.de).join(cambio.a)
-  hechos.push(`${cambio.nombre} (${cambio.veces})`)
-}
-
-if (hechos.length === 0) {
-  console.log('parchear-webgl: ya estaba aplicado')
-} else {
-  writeFileSync(RUTA, fuente)
-  console.log(`parchear-webgl: ${hechos.join(', ')}`)
+  if (hechos.length) {
+    writeFileSync(archivo, texto)
+    console.log(`parchear-webgl: ${archivo}`)
+    for (const nombre of hechos) console.log(`  - ${nombre}`)
+  } else {
+    console.log(`parchear-webgl: ${archivo} ya estaba al dia`)
+  }
 }
