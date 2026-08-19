@@ -20,7 +20,7 @@ background = "#000000"
     assert_eq!(config.colors.background, "#000000");
     // Lo que no vino queda en el default, no en cero.
     assert_eq!(config.window.opacity, 0.88);
-    assert_eq!(config.terminal.scrollback, 10000);
+    assert_eq!(config.terminal.scrollback, 5000);
     assert_eq!(config.colors.normal.red, "#e27878");
     assert!(config.font.family.contains("Nerd Font"));
 }

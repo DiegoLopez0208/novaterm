@@ -5,7 +5,14 @@
 /* Nova Mono: build propio de Iosevka (OFL 1.1, sin Reserved Font Name), la
    unica fuente que la app garantiza. Sin esto la lista de Ajustes dependia
    entera de lo que hubiera instalado en la maquina, y el default caia a
-   Consolas, que no tiene un solo glifo Nerd Font. */
+   Consolas, que no tiene un solo glifo Nerd Font.
+
+   Las cuatro variantes van recortadas a los glifos que una terminal dibuja:
+   ~850 KB cada una pasaron a ~100 KB, y el webview dejo de rasterizar el CJK y
+   los silabarios del build completo. Se regeneran con
+   scripts/subsetear-fuentes.sh a partir de fuentes/originales/; ese script
+   documenta que se conserva. Un caracter fuera del recorte no queda en tofu:
+   cae al resto de la cadena de fuentes como cualquier otro faltante. */
 @font-face {
   font-family: 'Nova Mono';
   src: url('./assets/fonts/NovaMono-Regular.woff2') format('woff2');

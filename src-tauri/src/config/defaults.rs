@@ -44,7 +44,9 @@ impl Default for CursorConfig {
 impl Default for TerminalConfig {
     fn default() -> Self {
         Self {
-            scrollback: 10000,
+            // Por panel, no por ventana: cuatro paneles con el default viejo de
+            // 10.000 lineas eran ~24 MB de buffer que casi nadie llega a mirar.
+            scrollback: 5000,
             copy_on_select: false,
             gpu: true,
         }
