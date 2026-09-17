@@ -9,6 +9,7 @@ import {
   Marca,
   Maximizar,
   Minimizar,
+  Plugins,
 } from './Iconos'
 import type { NovaConfig } from '../config/configBridge'
 
@@ -17,6 +18,7 @@ interface Props {
   colors: NovaConfig['colors']
   paneles: number
   onSettings: () => void
+  onPlugins: () => void
   onDividir: (direccion: 'vertical' | 'horizontal') => void
   onCerrarPanel: () => void
 }
@@ -46,6 +48,7 @@ export function TitleBar({
   colors,
   paneles,
   onSettings,
+  onPlugins,
   onDividir,
   onCerrarPanel,
 }: Props) {
@@ -115,6 +118,15 @@ export function TitleBar({
         )}
 
         <span className="division-barra" />
+
+        <button
+          className="accion"
+          onClick={onPlugins}
+          title={`Plugins — ${atajo('plugins.abrir')}`}
+          aria-label="Plugins"
+        >
+          <Plugins />
+        </button>
 
         <button className="accion" onClick={onSettings} title={`Ajustes — ${atajo('app.ajustes')}`}>
           <Ajustes />

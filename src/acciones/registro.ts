@@ -107,6 +107,7 @@ export const COMBOS = {
   // aca para que el menu contextual muestre lo que de verdad hace la tecla.
   'terminal.copiar': { teclas: ['c'], ctrl: true },
   'terminal.pegar': { teclas: ['v'], ctrl: true },
+  'plugins.abrir': { teclas: ['m'], ctrl: true, shift: true },
   'app.paleta': { teclas: ['p'], ctrl: true, shift: true },
   'app.ajustes': { teclas: [','], ctrl: true },
   'app.pantalla-completa': { teclas: ['f11'] },
@@ -147,6 +148,7 @@ export function construirAcciones(ctx: Contexto): Accion[] {
       id: 'plugins.abrir',
       titulo: 'Plugins: abrir el catálogo',
       grupo: 'Plugins',
+      combo: COMBOS['plugins.abrir'],
       ejecutar: ctx.abrirPlugins,
     },
     {

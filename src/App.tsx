@@ -210,22 +210,26 @@ export default function App() {
     return () => window.removeEventListener('wheel', onWheel)
   }, [zoom])
 
-  // La ventana arranca oculta (`visible: false`) para no mostrar un rectangulo
-  // transparente vacio mientras carga el webview, y se muestra cuando el arbol
-  // ya esta montado: este efecto corre despues del commit, con el DOM puesto.
+  // El splash del index.html se retira recien cuando hay algo que mostrar en su
+  // lugar. La ventana ya se mostro desde main.tsx, con el cartel puesto.
   //
   // **No usar requestAnimationFrame aca.** WebView2 no dibuja cuadros mientras
-  // la ventana esta oculta, asi que los callbacks de rAF no llegan a correr
-  // nunca y la ventana terminaba apareciendo recien a los 3 s, por la red de
-  // seguridad de Rust. Los temporizadores si corren.
-  const mostrada = useRef(false)
+  // la ventana esta oculta, asi que los callbacks de rAF pueden no correr nunca.
+  // Los temporizadores si corren.
+  const retirado = useRef(false)
   useEffect(() => {
-    if (!config || mostrada.current) return
-    mostrada.current = true
+    if (!config || retirado.current) return
+    retirado.current = true
 
     const id = window.setTimeout(() => {
-      document.getElementById('splash')?.remove()
-      void invoke('window_ready').catch(() => {})
+      const splash = document.getElementById('splash')
+      if (!splash) return
+      // El remove va atado a la transicion, con un plazo por si la transicion no
+      // llega a dispararse: un splash que no se va tapa la app entera.
+      const sacar = () => splash.remove()
+      splash.addEventListener('transitionend', sacar, { once: true })
+      window.setTimeout(sacar, 600)
+      splash.classList.add('se-va')
     }, 0)
     return () => window.clearTimeout(id)
   }, [config])
@@ -279,6 +283,7 @@ export default function App() {
         colors={config.colors}
         paneles={hojas(tabs.actual.raiz).length}
         onSettings={() => setAjustes((v) => !v)}
+        onPlugins={() => setMercado(true)}
         onDividir={tabs.dividir}
         onCerrarPanel={tabs.cerrarPanelActivo}
       />

@@ -25,6 +25,12 @@
         background: #0d0f18;
         animation: splash-entrada 0.18s ease-out;
       }
+      /* La salida la dispara React cuando ya tiene algo que dibujar debajo. */
+      #splash.se-va {
+        opacity: 0;
+        transition: opacity 0.22s ease-in;
+        pointer-events: none;
+      }
       #splash svg {
         width: 76px;
         height: 76px;

@@ -66,6 +66,20 @@ export function Ajustes({ tam }: Props) {
   )
 }
 
+/// Una pieza suelta que encaja: es el catalogo de plugins. El enchufe, que es
+/// la otra metafora habitual, a 13 px se lee como un tomacorriente y no como
+/// algo que se agrega.
+export function Plugins({ tam }: Props) {
+  return (
+    <Svg tam={tam}>
+      <path
+        d="M6.2 2.8h3.6v1.6a1.3 1.3 0 1 0 2.6 0V2.8h1.4v3.4h-1.6a1.3 1.3 0 1 0 0 2.6h1.6v3.4H2.2V2.8h4z"
+        {...trazo}
+      />
+    </Svg>
+  )
+}
+
 export function Cerrar({ tam }: Props) {
   return (
     <Svg tam={tam}>

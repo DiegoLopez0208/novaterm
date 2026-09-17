@@ -28,6 +28,15 @@
 // la app aunque el otro archivo se vea arreglado. Ese fue exactamente el error
 // de la primera version de este script.
 //
+// Lo que NO se toca: `premultipliedAlpha` del contexto WebGL2. El contexto se
+// crea con el default (premultiplicado) mientras el blend es
+// blendFunc(SRC_ALPHA, ONE_MINUS_SRC_ALPHA), que es la formula de alpha directo.
+// Sobre el papel ese desajuste deja un halo en los bordes de los glifos y
+// ponerlo en false lo arregla. Medido, hace lo contrario: el texto sale lavado.
+// Comparando la misma pantalla con y sin el cambio, la luminancia media baja de
+// 43.4 a 37.2 y el texto tenue queda casi ilegible. Los rectangulos negros se
+// arreglan con los dos cambios de arriba; este no hacia falta.
+
 // Se parchea el bundle en vez de usar patch-package porque cada archivo es una
 // sola linea de cientos de KB: el .patch resultante pesaba 495 KB y era
 // inrevisable.
@@ -59,12 +68,6 @@ const OBJETIVOS = [
         a: 'Vn=(xe&255)/255,this._addRectangle(',
         veces: 1,
       },
-      {
-        nombre: 'premultipliedAlpha del contexto WebGL2',
-        de: '{antialias:!1,depth:!1,preserveDrawingBuffer:c}',
-        a: '{antialias:!1,depth:!1,premultipliedAlpha:!1,preserveDrawingBuffer:c}',
-        veces: 1,
-      },
     ],
   },
   {
@@ -86,12 +89,6 @@ const OBJETIVOS = [
         nombre: 'alpha real del rectangulo',
         de: 'g=1,this._addRectangle(',
         a: 'g=(h&255)/255,this._addRectangle(',
-        veces: 1,
-      },
-      {
-        nombre: 'premultipliedAlpha del contexto WebGL2',
-        de: '{antialias:!1,depth:!1,preserveDrawingBuffer:v}',
-        a: '{antialias:!1,depth:!1,premultipliedAlpha:!1,preserveDrawingBuffer:v}',
         veces: 1,
       },
     ],

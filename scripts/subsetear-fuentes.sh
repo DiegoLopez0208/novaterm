@@ -24,8 +24,12 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# El braille (U+2800-28FF) no es decorativo: es el spinner de Claude Code, de npm
+# y de media CLI moderna. Sin el, cada cuadro del spinner cae a otra fuente y se
+# ve el salto. U+1FB00-1FBFF son los sextantes que usan las TUI para dibujar
+# barras y graficos con media celda.
 # Si cambias esta lista, actualiza tambien el unicode-range de src/index.css.
-RANGOS='U+0000-00FF,U+0100-024F,U+02B0-02FF,U+0300-036F,U+0370-03FF,U+1E00-1EFF,U+2000-206F,U+2070-209F,U+20A0-20BF,U+2100-214F,U+2150-218F,U+2190-21FF,U+2200-22FF,U+2300-23FF,U+2400-243F,U+2500-257F,U+2580-259F,U+25A0-25FF,U+2600-26FF,U+2700-27BF,U+27C0-27EF,U+2900-297F,U+2B00-2BFF,U+FE00-FE0F,U+FFFD'
+RANGOS='U+0000-00FF,U+0100-024F,U+02B0-02FF,U+0300-036F,U+0370-03FF,U+1E00-1EFF,U+2000-206F,U+2070-209F,U+20A0-20BF,U+2100-214F,U+2150-218F,U+2190-21FF,U+2200-22FF,U+2300-23FF,U+2400-243F,U+2500-257F,U+2580-259F,U+25A0-25FF,U+2600-26FF,U+2700-27BF,U+27C0-27EF,U+2900-297F,U+2A00-2AFF,U+2B00-2BFF,U+2E00-2E7F,U+2800-28FF,U+1FB00-1FBFF,U+FE00-FE0F,U+FFFD'
 
 for variante in Regular Bold Italic BoldItalic; do
   origen="fuentes/originales/NovaMono-$variante.woff2"
