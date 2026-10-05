@@ -1,0 +1,10 @@
+id = "example-output-explainer"
+name = "Output explainer"
+version = "0.1.0"
+description = "Explain the last 100 terminal lines when requested. Uses your configured AI provider."
+entry = "index.js"
+permissions = ["ui.panel", "terminal.read", "llm.complete", "commands"]
+
+[[commands]]
+id = "explain-output"
+title = "Explain terminal output"

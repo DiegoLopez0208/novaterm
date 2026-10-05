@@ -29,7 +29,7 @@ const VACIO = {
 /// Los perfiles que agrega el usuario. Hasta ahora esto solo se podia hacer
 /// escribiendo `profiles = [...]` a mano en el config.toml, asi que el menu de
 /// nueva pestaña mostraba unicamente lo que la app detectaba sola.
-export function SeccionPerfiles({ config, onChange }: Props) {
+export function ProfilesSection({ config, onChange }: Props) {
   const [detectados, setDetectados] = useState<PerfilDetectado[]>([])
   const [borrador, setBorrador] = useState(VACIO)
   const [error, setError] = useState<string | null>(null)
@@ -51,11 +51,11 @@ export function SeccionPerfiles({ config, onChange }: Props) {
     const comando = borrador.comando.trim()
 
     if (!nombre) {
-      setError('Falta el nombre')
+      setError('Name is required')
       return
     }
     if (!comando) {
-      setError('Falta el comando')
+      setError('Command is required')
       return
     }
 
@@ -91,9 +91,9 @@ export function SeccionPerfiles({ config, onChange }: Props) {
   return (
     <>
       <p className="nota">
-        Cada perfil es una entrada en el menú <strong>+</strong> de la barra de pestañas y en
-        la paleta de comandos. Sirve para cualquier cosa que abra una terminal: una distro de
-        WSL, un shell de otra máquina, un entorno con variables propias.
+        Each profile appears in the <strong>+</strong> menu in the tab bar and
+        the command palette. Use profiles for WSL distributions, remote shells or
+        environments with their own variables.
       </p>
 
       {propios.length > 0 && (
@@ -103,8 +103,8 @@ export function SeccionPerfiles({ config, onChange }: Props) {
               <IconoPerfil nombre={perfil.icon} />
               <span className="nombre">{perfil.name}</span>
               <code>{[perfil.command, ...perfil.args].join(' ')}</code>
-              <button className="borrar" onClick={() => borrar(perfil.id)} aria-label={`Borrar ${perfil.name}`}>
-                Borrar
+              <button className="borrar" onClick={() => borrar(perfil.id)} aria-label={`Delete ${perfil.name}`}>
+                Delete
               </button>
             </li>
           ))}
@@ -113,7 +113,7 @@ export function SeccionPerfiles({ config, onChange }: Props) {
 
       <div className="alta-perfil">
         <label className="campo">
-          <span>Nombre</span>
+          <span>Name</span>
           <input
             className="texto"
             value={borrador.nombre}
@@ -124,7 +124,7 @@ export function SeccionPerfiles({ config, onChange }: Props) {
         </label>
 
         <label className="campo">
-          <span>Comando</span>
+          <span>Command</span>
           <input
             className="texto"
             value={borrador.comando}
@@ -135,7 +135,7 @@ export function SeccionPerfiles({ config, onChange }: Props) {
         </label>
 
         <label className="campo">
-          <span>Argumentos</span>
+          <span>Arguments</span>
           <textarea
             className="texto"
             rows={3}
@@ -146,30 +146,30 @@ export function SeccionPerfiles({ config, onChange }: Props) {
           />
         </label>
         <p className="nota">
-          Uno por línea. Nunca se arma una línea de comando pegando texto, así que una ruta
-          con espacios va entera en su renglón.
+          One argument per line. Arguments are passed separately, so put an entire path
+          containing spaces on a single line.
         </p>
 
         <label className="campo">
-          <span>Icono</span>
+          <span>Icon</span>
           <select
             value={borrador.icono}
             onChange={(e) => setBorrador({ ...borrador, icono: e.target.value })}
           >
             {ICONOS.map((icono) => (
               <option key={icono} value={icono}>
-                {icono || 'genérico'}
+                {icono || 'generic'}
               </option>
             ))}
           </select>
         </label>
 
         <label className="campo">
-          <span>Carpeta inicial</span>
+          <span>Starting directory</span>
           <input
             className="texto"
             value={borrador.cwd}
-            placeholder="opcional"
+            placeholder="optional"
             onChange={(e) => setBorrador({ ...borrador, cwd: e.target.value })}
             onKeyDown={(e) => e.stopPropagation()}
           />
@@ -182,14 +182,14 @@ export function SeccionPerfiles({ config, onChange }: Props) {
         )}
 
         <button className="primario" onClick={guardar}>
-          Agregar perfil
+          Add profile
         </button>
       </div>
 
-      <p className="grupo">Detectados</p>
+      <p className="grupo">Detected</p>
       <p className="nota">
-        Estos los encuentra la app sola. Si instalás WSL, pwsh o Git con NovaTerm abierto,
-        volvé a detectar.
+        NovaTerm finds these automatically. If you install WSL, pwsh or Git while NovaTerm
+        is open, run detection again.
       </p>
 
       <ul className="lista-ssh lista-perfiles detectados">
@@ -200,7 +200,7 @@ export function SeccionPerfiles({ config, onChange }: Props) {
             <code>{perfil.command}</code>
           </li>
         ))}
-        {detectados.length === 0 && <li className="vacia">No se detectó ningún shell.</li>}
+        {detectados.length === 0 && <li className="vacia">No shells detected.</li>}
       </ul>
 
       <button
@@ -210,7 +210,7 @@ export function SeccionPerfiles({ config, onChange }: Props) {
         }}
         disabled={redetectando}
       >
-        {redetectando ? 'Buscando…' : 'Volver a detectar'}
+        {redetectando ? 'Searching…' : 'Detect again'}
       </button>
     </>
   )

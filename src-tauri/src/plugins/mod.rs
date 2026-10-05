@@ -116,13 +116,13 @@ pub struct WidgetPlugin {
     pub command: String,
     #[serde(default)]
     pub args: Vec<String>,
-    #[serde(default = "intervalo_por_defecto")]
+    #[serde(default = "intervalo_por_defecto", alias = "interval_ms")]
     pub intervalo_ms: u64,
     /// Texto que se antepone a la salida, por ejemplo "git:".
-    #[serde(default)]
+    #[serde(default, alias = "prefix")]
     pub prefijo: String,
     /// Se ejecuta dentro del directorio actual de la terminal, si se conoce.
-    #[serde(default)]
+    #[serde(default, alias = "use_cwd")]
     pub usar_cwd: bool,
 }
 

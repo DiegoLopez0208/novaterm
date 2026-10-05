@@ -99,12 +99,12 @@ export function construirBienvenida(
   columnas: number,
 ): string {
   const datos: [string, string][] = [
-    ['SO', `${info.so} ${info.version}`.trim()],
+    ['OS', `${info.so} ${info.version}`.trim()],
     ['CPU', `${info.cpu} (${info.nucleos})`],
     ...(info.gpu ? ([['GPU', info.gpu]] as [string, string][]) : []),
     ['RAM', gigas(info.ram_total)],
-    ['Encendida', tiempoEncendido(info.uptime)],
-    ['Fuente', `${familiaVisible(config.font.family)} ${config.font.size}`],
+    ['Uptime', tiempoEncendido(info.uptime)],
+    ['Font', `${familiaVisible(config.font.family)} ${config.font.size}`],
     ['NovaTerm', info.novaterm],
   ]
 
@@ -151,11 +151,11 @@ export function construirBienvenida(
 
 function tutorial(columnas: number): string[] {
   const entradas: [string, string][] = [
-    [atajo('app.ajustes'), 'ajustes'],
-    [atajo('app.paleta'), 'todo lo que se puede hacer'],
-    [atajo('terminal.buscar'), 'buscar'],
-    [atajo('panel.dividir-vertical'), 'dividir'],
-    ['Ctrl+rueda', 'tamaño de la letra'],
+    [atajo('app.ajustes'), 'settings'],
+    [atajo('app.paleta'), 'all commands'],
+    [atajo('terminal.buscar'), 'search'],
+    [atajo('panel.dividir-vertical'), 'split'],
+    ['Ctrl+wheel', 'font size'],
   ]
 
   const anchoAtajo = Math.max(...entradas.map(([a]) => a.length))
@@ -191,6 +191,6 @@ function tutorial(columnas: number): string[] {
         .trimEnd(),
   )
 
-  filas.push(`  ${TINTA}se apaga con ${ACENTO}ui.welcome = false${TINTA} en el config${RESET}`)
+  filas.push(`  ${TINTA}disable with ${ACENTO}ui.welcome = false${TINTA} in config${RESET}`)
   return filas
 }

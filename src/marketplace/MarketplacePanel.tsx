@@ -43,7 +43,7 @@ export function MarketplacePanel({ onCerrar }: Props) {
       setEstado(null)
       invoke<Ficha[]>('market_buscar', { consulta: texto })
         .then(setFichas)
-        .catch((err) => setEstado(`No se pudo hablar con el registro: ${err}`))
+        .catch((err) => setEstado(`Could not connect to the registry: ${err}`))
         .finally(() => setCargando(false))
     },
     [],
@@ -71,7 +71,7 @@ export function MarketplacePanel({ onCerrar }: Props) {
 
   const instalar = async (ficha: Ficha) => {
     setCargando(true)
-    setEstado('Bajando y verificando la firma...')
+    setEstado('Downloading and verifying signature...')
     try {
       await invoke('plugin_install', { id: ficha.id, version: null })
       window.dispatchEvent(new Event(PLUGINS_CHANGED))
@@ -80,25 +80,25 @@ export function MarketplacePanel({ onCerrar }: Props) {
       if (marcados.length > 0) {
         await invoke('plugin_conceder', { id: ficha.id, permisos: marcados })
       }
-      setEstado(`"${ficha.name}" quedó instalado.`)
+      setEstado(`"${ficha.name}" was installed.`)
       setElegida(null)
       recargarInstalados()
     } catch (err) {
-      setEstado(`No se instaló: ${err}`)
+      setEstado(`Installation failed: ${err}`)
     } finally {
       setCargando(false)
     }
   }
 
   const desinstalar = async (id: string) => {
-    if (!window.confirm(`¿Desinstalar "${id}"? También se olvidan sus permisos.`)) return
+    if (!window.confirm(`Uninstall "${id}"? Its permissions will also be removed.`)) return
     try {
       await invoke('plugin_uninstall', { id })
       window.dispatchEvent(new Event(PLUGINS_CHANGED))
       recargarInstalados()
-      setEstado(`"${id}" se desinstaló.`)
+      setEstado(`"${id}" was uninstalled.`)
     } catch (err) {
-      setEstado(`No se pudo desinstalar: ${err}`)
+      setEstado(`Could not uninstall: ${err}`)
     }
   }
 
@@ -109,7 +109,7 @@ export function MarketplacePanel({ onCerrar }: Props) {
       <div className="marketplace" onMouseDown={(e) => e.stopPropagation()}>
         <header>
           <h2>Plugins</h2>
-          <button type="button" onClick={onCerrar} title="Cerrar">
+          <button type="button" onClick={onCerrar} title="Close">
             ✕
           </button>
         </header>
@@ -124,11 +124,11 @@ export function MarketplacePanel({ onCerrar }: Props) {
           <input
             value={consulta}
             onChange={(e) => setConsulta(e.target.value)}
-            placeholder="Buscar en el catálogo"
+            placeholder="Search catalog"
             autoFocus
           />
           <button type="submit" disabled={cargando}>
-            Buscar
+            Search
           </button>
         </form>
 
@@ -141,11 +141,11 @@ export function MarketplacePanel({ onCerrar }: Props) {
 
             {elegida.permissions.length === 0 ? (
               <p className="sin-permisos">
-                No pide ningún permiso: solo aporta widgets y perfiles.
+                No API permissions requested: this plugin contributes widgets and profiles.
               </p>
             ) : (
               <>
-                <p className="grupo">Este plugin quiere poder:</p>
+                <p className="grupo">This plugin requests permission to:</p>
                 <ul className="permisos">
                   {elegida.permissions.map((permiso) => (
                     <li key={permiso} className={esDelicado(permiso) ? 'delicado' : undefined}>
@@ -161,17 +161,17 @@ export function MarketplacePanel({ onCerrar }: Props) {
                   ))}
                 </ul>
                 <p className="aviso">
-                  Lo que no marques queda denegado. Podés cambiarlo después en Ajustes.
+                  Unchecked permissions remain denied.
                 </p>
               </>
             )}
 
             <div className="acciones">
               <button type="button" onClick={() => setElegida(null)}>
-                Volver
+                Back
               </button>
               <button type="button" disabled={cargando} onClick={() => void instalar(elegida)}>
-                Instalar
+                Install
               </button>
             </div>
           </section>
@@ -183,22 +183,22 @@ export function MarketplacePanel({ onCerrar }: Props) {
                   <strong>{ficha.name}</strong>
                   <p>{ficha.description}</p>
                   {ficha.permissions.some(esDelicado) && (
-                    <em className="delicado">Pide acceso a tu terminal</em>
+                    <em className="delicado">Requests terminal access</em>
                   )}
                 </div>
                 {estaInstalado(ficha.id) ? (
                   <button type="button" onClick={() => void desinstalar(ficha.id)}>
-                    Desinstalar
+                    Uninstall
                   </button>
                 ) : (
                   <button type="button" onClick={() => abrir(ficha)}>
-                    Ver
+                    View
                   </button>
                 )}
               </li>
             ))}
             {fichas.length === 0 && !cargando && (
-              <li className="vacio">No hay nada en el catálogo todavía.</li>
+              <li className="vacio">The catalog is empty.</li>
             )}
           </ul>
         )}

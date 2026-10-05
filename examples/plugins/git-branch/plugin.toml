@@ -1,0 +1,12 @@
+id = "example-git-branch"
+name = "Git branch"
+version = "0.1.0"
+description = "Show the current Git branch in the status bar. Requires Git on PATH."
+
+[[widgets]]
+id = "branch"
+command = "git"
+args = ["branch", "--show-current"]
+interval_ms = 10000
+prefix = "git: "
+use_cwd = true

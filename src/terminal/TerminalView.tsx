@@ -304,7 +304,7 @@ export function TerminalView({
     }
 
     start().catch((err) => {
-      term.write(`\r\n\x1b[31mno se pudo abrir el shell: ${String(err)}\x1b[0m\r\n`)
+      term.write(`\r\n\x1b[31mCould not open shell: ${String(err)}\x1b[0m\r\n`)
     })
 
     const observer = new ResizeObserver(() => {

@@ -139,112 +139,112 @@ export function construirAcciones(ctx: Contexto): Accion[] {
   const acciones: Accion[] = [
     {
       id: 'pestana.nueva',
-      titulo: 'Nueva pestaña',
-      grupo: 'Pestañas',
+      titulo: 'New tab',
+      grupo: 'Tabs',
       combo: COMBOS['pestana.nueva'],
       ejecutar: () => ctx.nuevaPestana(),
     },
     {
       id: 'plugins.abrir',
-      titulo: 'Plugins: abrir el catálogo',
+      titulo: 'Plugins: open catalog',
       grupo: 'Plugins',
       combo: COMBOS['plugins.abrir'],
       ejecutar: ctx.abrirPlugins,
     },
     {
       id: 'pestana.duplicar',
-      titulo: 'Duplicar pestaña',
-      grupo: 'Pestañas',
+      titulo: 'Duplicate tab',
+      grupo: 'Tabs',
       ejecutar: ctx.duplicar,
     },
     {
       id: 'pestana.cerrar',
-      titulo: 'Cerrar pestaña',
-      grupo: 'Pestañas',
+      titulo: 'Close tab',
+      grupo: 'Tabs',
       combo: COMBOS['pestana.cerrar'],
       ejecutar: ctx.cerrarPestana,
     },
     {
       id: 'pestana.siguiente',
-      titulo: 'Pestaña siguiente',
-      grupo: 'Pestañas',
+      titulo: 'Next tab',
+      grupo: 'Tabs',
       combo: COMBOS['pestana.siguiente'],
       ejecutar: () => ctx.moverPestana(1),
     },
     {
       id: 'pestana.anterior',
-      titulo: 'Pestaña anterior',
-      grupo: 'Pestañas',
+      titulo: 'Previous tab',
+      grupo: 'Tabs',
       combo: COMBOS['pestana.anterior'],
       ejecutar: () => ctx.moverPestana(-1),
     },
     {
       id: 'panel.dividir-vertical',
-      titulo: 'Dividir a la derecha',
-      grupo: 'Paneles',
+      titulo: 'Split right',
+      grupo: 'Panes',
       combo: COMBOS['panel.dividir-vertical'],
       ejecutar: () => ctx.dividir('vertical'),
     },
     {
       id: 'panel.dividir-horizontal',
-      titulo: 'Dividir abajo',
-      grupo: 'Paneles',
+      titulo: 'Split down',
+      grupo: 'Panes',
       combo: COMBOS['panel.dividir-horizontal'],
       ejecutar: () => ctx.dividir('horizontal'),
     },
     {
       id: 'panel.cerrar',
-      titulo: 'Cerrar panel',
-      grupo: 'Paneles',
+      titulo: 'Close pane',
+      grupo: 'Panes',
       combo: COMBOS['panel.cerrar'],
       ejecutar: ctx.cerrarPanel,
     },
     {
       id: 'panel.siguiente',
       titulo: 'Panel siguiente',
-      grupo: 'Paneles',
+      grupo: 'Panes',
       combo: COMBOS['panel.siguiente'],
       ejecutar: () => ctx.moverPanel(1),
     },
     {
       id: 'panel.anterior',
       titulo: 'Panel anterior',
-      grupo: 'Paneles',
+      grupo: 'Panes',
       combo: COMBOS['panel.anterior'],
       ejecutar: () => ctx.moverPanel(-1),
     },
     {
       id: 'terminal.buscar',
-      titulo: 'Buscar en la terminal',
+      titulo: 'Search terminal',
       grupo: 'Terminal',
       combo: COMBOS['terminal.buscar'],
       ejecutar: ctx.buscar,
     },
     {
       id: 'app.paleta',
-      titulo: 'Paleta de comandos',
-      grupo: 'Aplicación',
+      titulo: 'Command palette',
+      grupo: 'Application',
       combo: COMBOS['app.paleta'],
       ejecutar: ctx.alternarPaleta,
     },
     {
       id: 'app.ajustes',
-      titulo: 'Abrir configuración',
-      grupo: 'Aplicación',
+      titulo: 'Open settings',
+      grupo: 'Application',
       combo: COMBOS['app.ajustes'],
       ejecutar: ctx.abrirAjustes,
     },
     {
       id: 'app.pantalla-completa',
-      titulo: 'Pantalla completa',
-      grupo: 'Aplicación',
+      titulo: 'Full screen',
+      grupo: 'Application',
       combo: COMBOS['app.pantalla-completa'],
       ejecutar: ctx.pantallaCompleta,
     },
     {
       id: 'app.recargar-config',
-      titulo: 'Recargar configuración',
-      grupo: 'Aplicación',
+      titulo: 'Reload settings',
+      grupo: 'Application',
       ejecutar: ctx.recargarConfig,
     },
     {
@@ -252,28 +252,28 @@ export function construirAcciones(ctx: Contexto): Accion[] {
       // `wsl.exe`, que tarda. Si instalaste WSL o pwsh con la app abierta, esto
       // la rehace.
       id: 'app.redetectar-shells',
-      titulo: 'Volver a detectar los shells',
-      grupo: 'Aplicación',
+      titulo: 'Detect shells again',
+      grupo: 'Application',
       ejecutar: ctx.redetectarShells,
     },
     {
       id: 'fuente.aumentar',
-      titulo: 'Agrandar la letra',
-      grupo: 'Fuente',
+      titulo: 'Increase font size',
+      grupo: 'Font',
       combo: COMBOS['fuente.aumentar'],
       ejecutar: () => ctx.zoom(1),
     },
     {
       id: 'fuente.reducir',
-      titulo: 'Achicar la letra',
-      grupo: 'Fuente',
+      titulo: 'Decrease font size',
+      grupo: 'Font',
       combo: COMBOS['fuente.reducir'],
       ejecutar: () => ctx.zoom(-1),
     },
     {
       id: 'fuente.restablecer',
-      titulo: 'Tamaño de letra por defecto',
-      grupo: 'Fuente',
+      titulo: 'Reset font size',
+      grupo: 'Font',
       combo: COMBOS['fuente.restablecer'],
       ejecutar: () => ctx.zoom(0),
     },
@@ -284,8 +284,8 @@ export function construirAcciones(ctx: Contexto): Accion[] {
   for (let n = 1; n <= 9; n++) {
     acciones.push({
       id: `pestana.ir-${n}`,
-      titulo: `Ir a la pestaña ${n}`,
-      grupo: 'Pestañas',
+      titulo: `Go to tab ${n}`,
+      grupo: 'Tabs',
       combo: { teclas: [String(n)], ctrl: true, alt: true },
       oculta: true,
       ejecutar: () => ctx.irAPestana(n - 1),
@@ -295,8 +295,8 @@ export function construirAcciones(ctx: Contexto): Accion[] {
   for (const perfil of ctx.perfiles) {
     acciones.push({
       id: `perfil.${perfil.id}`,
-      titulo: `Nueva pestaña: ${perfil.name}`,
-      grupo: 'Perfiles',
+      titulo: `New tab: ${perfil.name}`,
+      grupo: 'Profiles',
       ejecutar: () => ctx.nuevaPestana({ shell: perfil.command, args: perfil.args }),
     })
   }
@@ -304,8 +304,8 @@ export function construirAcciones(ctx: Contexto): Accion[] {
   for (const tema of TEMAS) {
     acciones.push({
       id: `tema.${tema.nombre}`,
-      titulo: `Tema: ${tema.nombre}`,
-      grupo: 'Temas',
+      titulo: `Theme: ${tema.nombre}`,
+      grupo: 'Themes',
       ejecutar: () => ctx.aplicarConfig({ ...ctx.config, colors: tema.colores }),
     })
   }
@@ -329,7 +329,7 @@ export function puntuar(texto: string, busqueda: string): number | null {
   for (const letra of termino) {
     const encontrada = objetivo.indexOf(letra, posicion)
     if (encontrada === -1) return null
-    // Penaliza los saltos: asi "Nueva pestaña" le gana a un titulo donde las
+    // Penaliza los saltos: asi "New tab" le gana a un titulo donde las
     // mismas letras aparecen desperdigadas.
     puntaje += anterior === -1 ? encontrada : encontrada - anterior - 1
     anterior = encontrada

@@ -88,8 +88,8 @@ export function TabBar({
                   className="cerrar-pestana"
                   onMouseDown={(e) => e.stopPropagation()}
                   onClick={() => onCerrar(pestana.id)}
-                  aria-label={`Cerrar ${etiqueta}`}
-                  title="Cerrar"
+                  aria-label={`Close ${etiqueta}`}
+                  title="Close"
                 >
                   <Cerrar tam={11} />
                 </button>
@@ -103,7 +103,7 @@ export function TabBar({
         <button
           className="nueva-pestana"
           onClick={() => onNueva()}
-          title={`Nueva pestaña — ${atajo('pestana.nueva')}`}
+          title={`New tab — ${atajo('pestana.nueva')}`}
         >
           <Mas tam={12} />
         </button>
@@ -111,8 +111,8 @@ export function TabBar({
           <button
             className="desplegar-perfiles"
             onClick={() => setMenu((v) => !v)}
-            aria-label="Elegir perfil"
-            title="Elegir perfil"
+            aria-label="Choose profile"
+            title="Choose profile"
           >
             <ChevronAbajo tam={11} />
           </button>
@@ -133,7 +133,7 @@ export function TabBar({
                   >
                     <IconoPerfil nombre={perfil.icon} />
                     {perfil.name}
-                    {!perfil.detectado && <em>propio</em>}
+                    {!perfil.detectado && <em>custom</em>}
                   </button>
                 </li>
               ))}

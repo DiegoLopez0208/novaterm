@@ -37,7 +37,7 @@ export function SeccionSSH({ onCambio }: Props) {
   const guardar = () => {
     const nombre = borrador.nombre.trim() || borrador.host.trim()
     if (!borrador.host.trim()) {
-      setError('Falta el host')
+      setError('Host is required')
       return
     }
 
@@ -71,10 +71,10 @@ export function SeccionSSH({ onCambio }: Props) {
 
   return (
     <>
-      <p className="grupo">Conexiones guardadas</p>
+      <p className="grupo">Saved connections</p>
 
       {conexiones.length === 0 && (
-        <p className="nota">Todavía no hay ninguna. Se abren como pestaña desde el botón +.</p>
+        <p className="nota">No saved connections yet. Open them as tabs from the + button.</p>
       )}
 
       <ul className="lista-ssh">
@@ -91,8 +91,8 @@ export function SeccionSSH({ onCambio }: Props) {
             <button
               className="borrar"
               onClick={() => borrar(conexion.id)}
-              aria-label={`Borrar ${conexion.nombre}`}
-              title="Borrar"
+              aria-label={`Delete ${conexion.nombre}`}
+              title="Delete"
             >
               ×
             </button>
@@ -101,34 +101,34 @@ export function SeccionSSH({ onCambio }: Props) {
       </ul>
 
       <div className="separador" />
-      <p className="grupo">{borrador.id ? 'Editar conexión' : 'Nueva conexión'}</p>
+      <p className="grupo">{borrador.id ? 'Edit connection' : 'New connection'}</p>
 
-      <Texto
-        etiqueta="Nombre"
+      <Text
+        etiqueta="Name"
         valor={borrador.nombre}
         placeholder="Production"
         onChange={(v) => setBorrador({ ...borrador, nombre: v })}
       />
-      <Texto
+      <Text
         etiqueta="Host"
         valor={borrador.host}
         placeholder="192.168.1.50"
         onChange={(v) => setBorrador({ ...borrador, host: v })}
       />
-      <Texto
-        etiqueta="Usuario"
+      <Text
+        etiqueta="User"
         valor={borrador.usuario}
         placeholder="root"
         onChange={(v) => setBorrador({ ...borrador, usuario: v })}
       />
-      <Texto
-        etiqueta="Puerto"
+      <Text
+        etiqueta="Port"
         valor={String(borrador.puerto)}
         placeholder="22"
         onChange={(v) => setBorrador({ ...borrador, puerto: Number(v) || 22 })}
       />
-      <Texto
-        etiqueta="Clave privada"
+      <Text
+        etiqueta="Private key"
         valor={borrador.identidad}
         placeholder="~/.ssh/id_ed25519"
         onChange={(v) => setBorrador({ ...borrador, identidad: v })}
@@ -138,20 +138,20 @@ export function SeccionSSH({ onCambio }: Props) {
 
       <div className="botones-ssh">
         <button className="primario" onClick={guardar}>
-          {borrador.id ? 'Guardar cambios' : 'Agregar'}
+          {borrador.id ? 'Save changes' : 'Add'}
         </button>
-        {borrador.id && <button onClick={() => setBorrador(VACIA)}>Cancelar</button>}
+        {borrador.id && <button onClick={() => setBorrador(VACIA)}>Cancel</button>}
       </div>
 
       <p className="nota">
-        Las contraseñas no se guardan. Usá clave pública; si el servidor pide contraseña, la
-        pide ssh dentro de la terminal.
+        Passwords are not stored. Use public key authentication; if the server requests a password,
+        SSH prompts for it inside the terminal.
       </p>
     </>
   )
 }
 
-function Texto({
+function Text({
   etiqueta,
   valor,
   placeholder,

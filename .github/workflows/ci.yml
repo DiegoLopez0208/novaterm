@@ -24,6 +24,10 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
+      - run: node scripts/check-version.mjs
+      - run: npm --prefix packages/plugin-sdk test
+      - run: npm pack --dry-run
+        working-directory: packages/plugin-sdk
       - run: npm run lint -- --deny-warnings
       - run: npm test
       - run: npm run build

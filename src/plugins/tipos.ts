@@ -13,11 +13,11 @@ export type Permiso =
 /// consecuencia, no el nombre tecnico: nadie evalua un permiso llamado
 /// "terminal.write".
 export const DESCRIPCION_PERMISO: Record<Permiso, string> = {
-  'terminal.read': 'Leer lo que aparece en tu terminal, incluido el historial',
-  'terminal.write': 'Escribir comandos en tu terminal y ejecutarlos',
-  'ui.panel': 'Mostrar su propio panel dentro de NovaTerm',
-  'llm.complete': 'Consultar al modelo de IA con tu clave',
-  commands: 'Agregar entradas a la paleta de comandos',
+  'terminal.read': 'Read terminal output, including scrollback',
+  'terminal.write': 'Write and execute commands in your terminal',
+  'ui.panel': 'Display a panel inside NovaTerm',
+  'llm.complete': 'Use your key to query the AI provider',
+  commands: 'Add entries to the command palette',
 }
 
 /// Los que no se conceden sin mirar. Se marcan aparte en la interfaz.

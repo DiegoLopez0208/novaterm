@@ -1,0 +1,18 @@
+{
+  "name": "@diegolopez0208/novaterm-plugin-sdk",
+  "version": "0.1.0",
+  "description": "Typed API for NovaTerm sandboxed panel plugins",
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": { ".": { "types": "./index.d.ts", "import": "./index.js" } },
+  "files": ["index.js", "index.d.ts", "README.md", "LICENSE"],
+  "scripts": { "test": "node --test test/*.test.js" },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DiegoLopez0208/novaterm.git",
+    "directory": "packages/plugin-sdk"
+  },
+  "publishConfig": { "registry": "https://npm.pkg.github.com" }
+}

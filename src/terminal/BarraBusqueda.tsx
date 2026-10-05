@@ -11,7 +11,7 @@ interface Props {
 /// tiene su propia terminal y su propio historial, y buscar en "la terminal"
 /// sin decir en cual no significa nada cuando hay cuatro abiertas.
 export function BarraBusqueda({ buscador, onCerrar }: Props) {
-  const [texto, setTexto] = useState('')
+  const [texto, setText] = useState('')
   const [sinResultados, setSinResultados] = useState(false)
   const campoRef = useRef<HTMLInputElement>(null)
 
@@ -53,10 +53,10 @@ export function BarraBusqueda({ buscador, onCerrar }: Props) {
         ref={campoRef}
         className={sinResultados ? 'sin-resultados' : undefined}
         value={texto}
-        placeholder="Buscar"
-        aria-label="Buscar en la terminal"
+        placeholder="Search"
+        aria-label="Search terminal"
         onChange={(e) => {
-          setTexto(e.target.value)
+          setText(e.target.value)
           buscar(1, e.target.value)
         }}
         onKeyDown={(e) => {
@@ -67,16 +67,16 @@ export function BarraBusqueda({ buscador, onCerrar }: Props) {
           if (e.key === 'Escape') onCerrar()
         }}
       />
-      <button onClick={() => buscar(-1)} title="Anterior — Shift+Enter" aria-label="Anterior">
+      <button onClick={() => buscar(-1)} title="Previous — Shift+Enter" aria-label="Previous">
         ↑
       </button>
-      <button onClick={() => buscar(1)} title="Siguiente — Enter" aria-label="Siguiente">
+      <button onClick={() => buscar(1)} title="Next — Enter" aria-label="Next">
         ↓
       </button>
       <button
         onClick={onCerrar}
-        title={`Cerrar — Esc (abrir: ${atajo('terminal.buscar')})`}
-        aria-label="Cerrar la búsqueda"
+        title={`Close — Esc (open: ${atajo('terminal.buscar')})`}
+        aria-label="Close search"
       >
         ✕
       </button>
