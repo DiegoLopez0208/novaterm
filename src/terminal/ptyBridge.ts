@@ -1,4 +1,5 @@
 import { Channel, invoke } from '@tauri-apps/api/core'
+import { createAckBatcher, createInputWriter, createResizeWriter } from './flowControl'
 
 export type PtyId = string
 
@@ -13,6 +14,13 @@ export interface SpawnOptions {
 export interface PtyExit {
   code: number | null
 }
+
+interface SessionControl {
+  input: ReturnType<typeof createInputWriter>
+  resize: ReturnType<typeof createResizeWriter<{ cols: number; rows: number }>>
+  acknowledgements: ReturnType<typeof createAckBatcher>
+}
+const sessions = new Map<PtyId, SessionControl>()
 
 /// El id se genera aca, no en el backend.
 ///
@@ -34,31 +42,74 @@ export function nuevoPtyId(): PtyId {
 export function spawnPty(
   id: PtyId,
   options: SpawnOptions,
-  onData: (bytes: Uint8Array) => void,
+  onData: (bytes: Uint8Array, parsed: () => void) => void,
   onExit: (exit: PtyExit) => void,
 ): Promise<PtyId> {
+  if (sessions.has(id)) return Promise.reject(new Error('PTY session already exists'))
+  const flowToken = crypto.randomUUID()
+  let ready!: () => void
+  let failed!: (reason: unknown) => void
+  const spawned = new Promise<void>((resolve, reject) => { ready = resolve; failed = reject })
+  const control: SessionControl = {
+    input: createInputWriter(spawned, (data) => invoke('pty_write', { id, data })),
+    resize: createResizeWriter(spawned, (size) => invoke('pty_resize', { id, ...size })),
+    acknowledgements: createAckBatcher(
+      (bytes) => invoke('pty_ack', { id, token: flowToken, bytes }),
+      () => { if (sessions.get(id) === control) void closePty(id).catch(() => {}) },
+    ),
+  }
+  sessions.set(id, control)
   const canalDatos = new Channel<ArrayBuffer>()
-  canalDatos.onmessage = (buffer) => onData(new Uint8Array(buffer))
+  canalDatos.onmessage = (buffer) => {
+    if (sessions.get(id) !== control) return
+    let parsed = false
+    onData(new Uint8Array(buffer), () => {
+      if (parsed) return
+      parsed = true
+      control.acknowledgements.parsed(buffer.byteLength)
+    })
+  }
 
   const canalSalida = new Channel<PtyExit>()
-  canalSalida.onmessage = onExit
+  canalSalida.onmessage = (exit) => {
+    if (sessions.get(id) !== control) return
+    control.input.dispose()
+    control.resize.dispose()
+    control.acknowledgements.dispose()
+    sessions.delete(id)
+    onExit(exit)
+  }
 
-  return invoke<PtyId>('pty_spawn', {
+  const invocation = invoke<PtyId>('pty_spawn', {
     id,
+    flowToken,
     options,
     onData: canalDatos,
     onExit: canalSalida,
   })
+  void invocation.then(ready, (error) => {
+    failed(error)
+    control.input.dispose()
+    control.resize.dispose()
+    control.acknowledgements.dispose()
+    if (sessions.get(id) === control) sessions.delete(id)
+  })
+  return invocation
 }
 
 export function writePty(id: PtyId, data: string): Promise<void> {
-  return invoke('pty_write', { id, data })
+  return sessions.get(id)?.input.write(data) ?? Promise.reject(new Error('PTY session is closed'))
 }
 
 export function resizePty(id: PtyId, cols: number, rows: number): Promise<void> {
-  return invoke('pty_resize', { id, cols, rows })
+  return sessions.get(id)?.resize.resize({ cols, rows }) ?? Promise.reject(new Error('PTY session is closed'))
 }
 
 export function closePty(id: PtyId): Promise<void> {
+  const control = sessions.get(id)
+  control?.input.dispose()
+  control?.resize.dispose()
+  control?.acknowledgements.dispose()
+  sessions.delete(id)
   return invoke('pty_close', { id })
 }

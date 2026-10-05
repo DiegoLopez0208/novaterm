@@ -91,8 +91,8 @@ export function TitleBar({
         <button
           className="accion"
           onClick={() => onDividir('vertical')}
-          title={`Dividir a la derecha — ${atajo('panel.dividir-vertical')}`}
-          aria-label="Dividir a la derecha"
+          title={`Split right — ${atajo('panel.dividir-vertical')}`}
+          aria-label="Split right"
         >
           <DividirDerecha />
         </button>
@@ -100,8 +100,8 @@ export function TitleBar({
         <button
           className="accion"
           onClick={() => onDividir('horizontal')}
-          title={`Dividir abajo — ${atajo('panel.dividir-horizontal')}`}
-          aria-label="Dividir abajo"
+          title={`Split down — ${atajo('panel.dividir-horizontal')}`}
+          aria-label="Split down"
         >
           <DividirAbajo />
         </button>
@@ -110,8 +110,8 @@ export function TitleBar({
           <button
             className="accion"
             onClick={onCerrarPanel}
-            title={`Cerrar panel — ${atajo('panel.cerrar')}`}
-            aria-label="Cerrar panel"
+            title={`Close pane — ${atajo('panel.cerrar')}`}
+            aria-label="Close pane"
           >
             <CerrarPanel />
           </button>
@@ -128,26 +128,26 @@ export function TitleBar({
           <Plugins />
         </button>
 
-        <button className="accion" onClick={onSettings} title={`Ajustes — ${atajo('app.ajustes')}`}>
+        <button className="accion" onClick={onSettings} title={`Settings — ${atajo('app.ajustes')}`}>
           <Ajustes />
         </button>
 
         <div className="ventana-controles">
-          <button onClick={() => ventana.minimize()} title="Minimizar" aria-label="Minimizar">
+          <button onClick={() => ventana.minimize()} title="Minimize" aria-label="Minimize">
             <Minimizar tam={11} />
           </button>
           <button
             onClick={() => ventana.toggleMaximize()}
-            title="Maximizar"
-            aria-label="Maximizar"
+            title="Maximize"
+            aria-label="Maximize"
           >
             <Maximizar tam={11} />
           </button>
           <button
             className="cerrar"
             onClick={() => ventana.close()}
-            title="Cerrar"
-            aria-label="Cerrar"
+            title="Close"
+            aria-label="Close"
           >
             <Cerrar tam={11} />
           </button>
@@ -157,8 +157,8 @@ export function TitleBar({
       <button
         className="tira"
         onClick={onSettings}
-        title="Paleta del tema — abrir ajustes"
-        aria-label="Paleta del tema"
+        title="Theme palette — open settings"
+        aria-label="Theme palette"
       >
         {ansi.map((color, i) => (
           <i key={i} style={{ background: color }} />

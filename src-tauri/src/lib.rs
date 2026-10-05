@@ -52,6 +52,7 @@ pub fn run() {
             commands::pty_write,
             commands::pty_resize,
             commands::pty_close,
+            commands::pty_ack,
             commands::config_get,
             commands::config_path,
             commands::config_save,

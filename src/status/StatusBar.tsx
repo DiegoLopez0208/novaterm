@@ -10,15 +10,16 @@ interface Props {
   paneles: number
 }
 
-// El intervalo mas corto que pide algun widget. Un solo temporizador para todos
-// en vez de uno por widget: son cuatro textos, no hace falta mas.
+// The clock can repaint independently of the more expensive system queries.
 const PASO = Math.min(...WIDGETS.map((w) => w.intervalo ?? Infinity))
+const STATS_INTERVAL_MS = 2000
 
 export function StatusBar({ shell, cwd, paneles }: Props) {
   const [stats, setStats] = useState<Stats | null>(null)
   const [, setTick] = useState(0)
   const enFoco = useEnFoco()
   const primera = useRef(true)
+  const statsPending = useRef(false)
 
   useEffect(() => {
     // Con la ventana atras no hay a quien mostrarle esto. Al volver el foco el
@@ -27,8 +28,13 @@ export function StatusBar({ shell, cwd, paneles }: Props) {
 
     let vivo = true
 
-    const refrescar = () => {
-      invoke<Stats>('system_stats')
+    const refrescar = async () => {
+      if (statsPending.current) {
+        id = window.setTimeout(() => void refrescar(), STATS_INTERVAL_MS)
+        return
+      }
+      statsPending.current = true
+      await invoke<Stats>('system_stats')
         .then((datos) => {
           if (vivo) setStats(datos)
         })
@@ -36,28 +42,31 @@ export function StatusBar({ shell, cwd, paneles }: Props) {
           // Si el backend no responde, los widgets que dependen de esto se
           // esconden solos; no hay nada que avisar.
         })
-      if (vivo) setTick((t) => t + 1)
+      statsPending.current = false
+      if (vivo) id = window.setTimeout(() => void refrescar(), STATS_INTERVAL_MS)
     }
 
-    // Al arrancar la primera lectura espera un paso completo, porque
-    // `system_stats` refresca todo sysinfo y compite con el spawn del PTY: el
-    // prompt primero. Al recuperar el foco, en cambio, se lee ya, o la barra
-    // muestra numeros viejos hasta el siguiente tick.
+    // Let the shell start first; refresh immediately when returning to focus.
     let id = 0
     const arranque = window.setTimeout(
       () => {
-        refrescar()
-        id = window.setInterval(refrescar, PASO)
+        void refrescar()
       },
-      primera.current ? PASO : 0,
+      primera.current ? STATS_INTERVAL_MS : 0,
     )
     primera.current = false
 
     return () => {
       vivo = false
       window.clearTimeout(arranque)
-      window.clearInterval(id)
+      window.clearTimeout(id)
     }
+  }, [enFoco])
+
+  useEffect(() => {
+    if (!enFoco) return
+    const id = window.setInterval(() => setTick((tick) => tick + 1), PASO)
+    return () => window.clearInterval(id)
   }, [enFoco])
 
   const contexto = { shell, cwd, paneles, stats }

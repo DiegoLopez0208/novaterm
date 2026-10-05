@@ -3,53 +3,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { olvidarPlugin, registrarPlugin } from './host'
 import type { Permiso, Plugin } from './tipos'
 
-/// La API que ve el plugin dentro del iframe.
-///
-/// Es una capa fina sobre `postMessage`: no decide nada, solo empareja pedidos
-/// con respuestas para que el plugin pueda usar `await`. Todo lo que importa lo
-/// decide el broker del otro lado.
-const PUENTE = `
-(() => {
-  let siguiente = 1
-  const pendientes = new Map()
-
-  addEventListener('message', (e) => {
-    const r = e.data
-    if (!r || r.nova !== 1 || typeof r.id !== 'number') return
-    const p = pendientes.get(r.id)
-    if (!p) return
-    pendientes.delete(r.id)
-    r.ok ? p.resolver(r.datos) : p.rechazar(new Error(r.error || 'rechazado'))
-  })
-
-  function pedir(metodo, datos) {
-    const id = siguiente++
-    return new Promise((resolver, rechazar) => {
-      pendientes.set(id, { resolver, rechazar })
-      parent.postMessage({ nova: 1, id, metodo, datos }, '*')
-      // Sin esto, un metodo que el broker no conteste deja la promesa colgada
-      // para siempre y el plugin parece trabado sin decir por que.
-      setTimeout(() => {
-        if (pendientes.delete(id)) rechazar(new Error(metodo + ': sin respuesta'))
-      }, 130000)
-    })
-  }
-
-  globalThis.nova = {
-    terminal: {
-      leer: (lines = 200) => pedir('terminal.read', { lines }).then((r) => r.text),
-      escribir: (data) => pedir('terminal.write', { data }),
-    },
-    ia: {
-      preguntar: (messages, opciones = {}) =>
-        pedir('llm.complete', { messages, ...opciones }),
-    },
-    comandos: {
-      disparar: (id) => pedir('commands.trigger', { id }),
-    },
-  }
-})()
-`
+import { SANDBOX_BRIDGE } from './sandboxBridge'
 
 /// Envuelve el codigo del plugin en un documento con su propia CSP.
 ///
@@ -81,7 +35,7 @@ function documento(codigo: string): string {
   }
 </style>
 </head><body>
-<script>${PUENTE}</script>
+<script>${SANDBOX_BRIDGE}</script>
 <script type="module">
 ${codigo}
 </script>
@@ -139,12 +93,12 @@ export function PanelPlugin({ plugin, concedidos, confianza, onComando, onCerrar
     <aside className="panel-plugin">
       <header>
         <span>{plugin.name}</span>
-        <button type="button" onClick={onCerrar} title="Cerrar el panel">
+        <button type="button" onClick={onCerrar} title="Close panel">
           ✕
         </button>
       </header>
 
-      {error && <p className="error-plugin">No se pudo cargar el plugin: {error}</p>}
+      {error && <p className="error-plugin">Could not load plugin: {error}</p>}
 
       {codigo && (
         <iframe

@@ -89,7 +89,10 @@ fn un_widget_sin_comando_es_un_error() {
 
     let err = leer_manifiesto(&raiz.join("malo").join("plugin.toml")).unwrap_err();
 
-    assert!(err.contains("no declara comando"), "error inesperado: {err}");
+    assert!(
+        err.contains("no declara comando"),
+        "error inesperado: {err}"
+    );
     let _ = std::fs::remove_dir_all(&raiz);
 }
 
@@ -111,7 +114,11 @@ fn descubrir_en_una_carpeta_que_no_existe_no_falla() {
 fn el_widget_ejecuta_y_devuelve_una_linea_con_prefijo() {
     let widget = WidgetPlugin {
         id: "eco".into(),
-        command: if cfg!(windows) { "cmd".into() } else { "echo".into() },
+        command: if cfg!(windows) {
+            "cmd".into()
+        } else {
+            "echo".into()
+        },
         args: if cfg!(windows) {
             vec!["/c".into(), "echo".into(), "hola".into()]
         } else {
@@ -122,7 +129,7 @@ fn el_widget_ejecuta_y_devuelve_una_linea_con_prefijo() {
         usar_cwd: false,
     };
 
-    let salida = ejecutar_widget(&widget, None).unwrap();
+    let salida = tauri::async_runtime::block_on(ejecutar_widget(&widget, None)).unwrap();
 
     assert_eq!(salida, "eco:hola");
 }
@@ -138,5 +145,36 @@ fn un_comando_inexistente_devuelve_error_en_vez_de_panic() {
         usar_cwd: false,
     };
 
-    assert!(ejecutar_widget(&widget, None).is_err());
+    assert!(tauri::async_runtime::block_on(ejecutar_widget(&widget, None)).is_err());
+}
+#[test]
+fn english_widget_keys_preserve_legacy_serialization() {
+    let english: super::WidgetPlugin = toml::from_str(
+        r#"
+        id = "branch"
+        command = "git"
+        interval_ms = 10000
+        prefix = "git: "
+        use_cwd = true
+    "#,
+    )
+    .unwrap();
+    assert_eq!(english.intervalo_ms, 10000);
+    assert_eq!(english.prefijo, "git: ");
+    assert!(english.usar_cwd);
+    let wire = serde_json::to_value(&english).unwrap();
+    assert_eq!(wire["intervalo_ms"], 10000);
+    assert_eq!(wire["prefijo"], "git: ");
+    assert_eq!(wire["usar_cwd"], true);
+    assert!(wire.get("interval_ms").is_none());
+}
+
+#[test]
+fn shipped_examples_are_valid_manifests() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../examples/plugins");
+    for example in ["git-branch", "output-explainer"] {
+        let plugin = super::leer_manifiesto(&root.join(example).join("plugin.toml")).unwrap();
+        assert!(!plugin.id.is_empty());
+        assert!(super::instalar::id_valido(&plugin.id));
+    }
 }

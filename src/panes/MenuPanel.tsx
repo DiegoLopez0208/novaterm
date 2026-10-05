@@ -56,19 +56,19 @@ export function MenuPanel({
           top: Math.min(y, window.innerHeight - 190),
         }}
       >
-        {item('Copiar', atajo('terminal.copiar'), onCopiar)}
-        {item('Pegar', atajo('terminal.pegar'), onPegar)}
+        {item('Copy', atajo('terminal.copiar'), onCopiar)}
+        {item('Paste', atajo('terminal.pegar'), onPegar)}
         <li className="separador-menu" />
-        {item('Dividir a la derecha', atajo('panel.dividir-vertical'), () =>
+        {item('Split right', atajo('panel.dividir-vertical'), () =>
           onDividir('vertical'),
         )}
-        {item('Dividir abajo', atajo('panel.dividir-horizontal'), () =>
+        {item('Split down', atajo('panel.dividir-horizontal'), () =>
           onDividir('horizontal'),
         )}
         {puedeCerrar && (
           <>
             <li className="separador-menu" />
-            {item('Cerrar panel', atajo('panel.cerrar'), onCerrarPanel)}
+            {item('Close pane', atajo('panel.cerrar'), onCerrarPanel)}
           </>
         )}
       </ul>

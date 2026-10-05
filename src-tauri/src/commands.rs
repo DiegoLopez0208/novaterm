@@ -4,11 +4,11 @@ use tauri::ipc::{Channel, InvokeResponseBody};
 use tauri::{AppHandle, Manager, State};
 
 use crate::config::{Config, ConfigStore};
+use crate::llm::Presupuesto;
 use crate::plugins::{descubrir, directorio_plugins, ejecutar_widget, Plugin, WidgetPlugin};
 use crate::profiles::{combinar, DeteccionCache, Profile};
-use crate::ssh;
-use crate::llm::Presupuesto;
 use crate::pty::{CanalSink, ExitPayload, PtyManager, PtySink, SpawnOptions};
+use crate::ssh;
 use crate::stats::{info_sistema, InfoSistema, Monitor, Stats};
 
 /// El orden es el de prioridad: lo tuyo primero, despues lo que aportan los
@@ -75,8 +75,11 @@ pub fn plugins_list() -> Vec<Plugin> {
 /// Corre el comando de un widget de plugin. El frontend lo llama con el
 /// intervalo que el propio plugin declara.
 #[tauri::command]
-pub fn plugin_widget_run(widget: WidgetPlugin, cwd: Option<String>) -> Result<String, String> {
-    ejecutar_widget(&widget, cwd.as_deref())
+pub async fn plugin_widget_run(
+    widget: WidgetPlugin,
+    cwd: Option<String>,
+) -> Result<String, String> {
+    ejecutar_widget(&widget, cwd.as_deref()).await
 }
 
 #[tauri::command]
@@ -101,7 +104,10 @@ pub fn ssh_save(conexion: ssh::Conexion) -> Result<Vec<ssh::Conexion>, String> {
 #[tauri::command]
 pub fn ssh_delete(id: String) -> Result<Vec<ssh::Conexion>, String> {
     let ruta = ssh::ruta_archivo();
-    let conexiones: Vec<_> = ssh::cargar(&ruta).into_iter().filter(|c| c.id != id).collect();
+    let conexiones: Vec<_> = ssh::cargar(&ruta)
+        .into_iter()
+        .filter(|c| c.id != id)
+        .collect();
     ssh::guardar(&ruta, &conexiones)?;
     Ok(conexiones)
 }
@@ -159,36 +165,65 @@ pub fn config_reload(store: State<'_, ConfigStore>) -> Result<Config, String> {
 }
 
 #[tauri::command]
-pub fn pty_spawn(
+pub async fn pty_spawn(
     manager: State<'_, PtyManager>,
     id: String,
+    flow_token: String,
     options: SpawnOptions,
     on_data: Channel<InvokeResponseBody>,
     on_exit: Channel<ExitPayload>,
 ) -> Result<String, String> {
-    manager.spawn(&id, options, move |_id| {
-        Arc::new(CanalSink::new(on_data, on_exit)) as Arc<dyn PtySink>
+    let manager = manager.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        manager.spawn_with_token(&id, flow_token, options, move |_id| {
+            Arc::new(CanalSink::new(on_data, on_exit)) as Arc<dyn PtySink>
+        })
     })
+    .await
+    .map_err(|err| err.to_string())?
 }
 
 #[tauri::command]
-pub fn pty_write(manager: State<'_, PtyManager>, id: String, data: String) -> Result<(), String> {
-    manager.write(&id, &data)
+pub async fn pty_write(
+    manager: State<'_, PtyManager>,
+    id: String,
+    data: String,
+) -> Result<(), String> {
+    let manager = manager.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || manager.write(&id, &data))
+        .await
+        .map_err(|err| err.to_string())?
 }
 
 #[tauri::command]
-pub fn pty_resize(
+pub async fn pty_resize(
     manager: State<'_, PtyManager>,
     id: String,
     cols: u16,
     rows: u16,
 ) -> Result<(), String> {
-    manager.resize(&id, cols, rows)
+    let manager = manager.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || manager.resize(&id, cols, rows))
+        .await
+        .map_err(|err| err.to_string())?
 }
 
 #[tauri::command]
-pub fn pty_close(manager: State<'_, PtyManager>, id: String) -> Result<(), String> {
-    manager.close(&id)
+pub async fn pty_close(manager: State<'_, PtyManager>, id: String) -> Result<(), String> {
+    let manager = manager.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || manager.close(&id))
+        .await
+        .map_err(|err| err.to_string())?
+}
+
+#[tauri::command]
+pub fn pty_ack(
+    manager: State<'_, PtyManager>,
+    id: String,
+    token: String,
+    bytes: usize,
+) -> Result<(), String> {
+    manager.acknowledge(&id, &token, bytes)
 }
 
 // --- plugins: permisos, codigo y catalogo -----------------------------------

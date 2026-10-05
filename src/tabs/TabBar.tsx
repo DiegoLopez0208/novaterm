@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { atajo } from '../acciones/registro'
 import { Cerrar, ChevronAbajo, IconoPerfil, Mas } from '../chrome/Iconos'
 import { hojas, type Pestana } from './modelo'
+import { shortTitle } from './title'
 
 export interface PerfilDisponible {
   id: string
@@ -22,24 +23,6 @@ interface Props {
   onCerrar: (id: string) => void
   onNueva: (perfil?: PerfilDisponible) => void
   onRenombrar: (id: string, alias: string) => void
-}
-
-const NOMBRES: Record<string, string> = {
-  powershell: 'PowerShell',
-  pwsh: 'PowerShell 7',
-  cmd: 'CMD',
-  wsl: 'WSL',
-  bash: 'bash',
-  zsh: 'zsh',
-  ssh: 'ssh',
-}
-
-/// El shell reporta la ruta completa del ejecutable como titulo. En una pestaña
-/// angosta eso es ilegible, asi que se muestra el nombre del programa.
-export function nombreCorto(bruto: string): string {
-  const ultimo = bruto.split(/[\\/]/).pop() ?? bruto
-  const sinExtension = ultimo.replace(/\.exe$/i, '')
-  return NOMBRES[sinExtension.toLowerCase()] ?? sinExtension
 }
 
 /// Que shell corre la pestaña, para elegirle el icono. El modelo guarda el
@@ -68,7 +51,7 @@ export function TabBar({
     <div className="pestanas" role="tablist">
       {pestanas.map((pestana) => {
         const paneles = hojas(pestana.raiz).length
-        const etiqueta = pestana.alias ?? nombreCorto(pestana.titulo)
+        const etiqueta = pestana.alias ?? shortTitle(pestana.titulo)
         const esActiva = pestana.id === activa
         const icono = iconoDePestana(pestana, perfiles)
 
@@ -105,8 +88,8 @@ export function TabBar({
                   className="cerrar-pestana"
                   onMouseDown={(e) => e.stopPropagation()}
                   onClick={() => onCerrar(pestana.id)}
-                  aria-label={`Cerrar ${etiqueta}`}
-                  title="Cerrar"
+                  aria-label={`Close ${etiqueta}`}
+                  title="Close"
                 >
                   <Cerrar tam={11} />
                 </button>
@@ -120,7 +103,7 @@ export function TabBar({
         <button
           className="nueva-pestana"
           onClick={() => onNueva()}
-          title={`Nueva pestaña — ${atajo('pestana.nueva')}`}
+          title={`New tab — ${atajo('pestana.nueva')}`}
         >
           <Mas tam={12} />
         </button>
@@ -128,8 +111,8 @@ export function TabBar({
           <button
             className="desplegar-perfiles"
             onClick={() => setMenu((v) => !v)}
-            aria-label="Elegir perfil"
-            title="Elegir perfil"
+            aria-label="Choose profile"
+            title="Choose profile"
           >
             <ChevronAbajo tam={11} />
           </button>
@@ -150,7 +133,7 @@ export function TabBar({
                   >
                     <IconoPerfil nombre={perfil.icon} />
                     {perfil.name}
-                    {!perfil.detectado && <em>propio</em>}
+                    {!perfil.detectado && <em>custom</em>}
                   </button>
                 </li>
               ))}

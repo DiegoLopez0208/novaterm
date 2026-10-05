@@ -63,7 +63,7 @@ function autorizaEscritura(entrada: Registrado, datos: string): boolean {
   if (entrada.confianza) return true
   const muestra = datos.length > 200 ? `${datos.slice(0, 200)}...` : datos
   return window.confirm(
-    `El plugin "${entrada.id}" quiere escribir esto en tu terminal:\n\n${muestra}\n\n¿Lo dejás?`,
+    `Plugin "${entrada.id}" wants to write this to your terminal:\n\n${muestra}\n\nAllow this write?`,
   )
 }
 
@@ -72,46 +72,46 @@ async function atender(entrada: Registrado, metodo: string, datos: unknown): Pro
 
   switch (metodo) {
     case 'terminal.read': {
-      if (!tiene('terminal.read')) throw new Error('sin permiso terminal.read')
+      if (!tiene('terminal.read')) throw new Error('permission denied: terminal.read')
       const viva = terminalActiva()
-      if (!viva) throw new Error('no hay ninguna terminal abierta')
+      if (!viva) throw new Error('no terminal is open')
       const pedido = (datos ?? {}) as { lines?: number }
       const lineas = Math.min(Math.max(1, Math.floor(pedido.lines ?? 200)), MAX_LINEAS)
       return { text: leerPantalla(viva.term, lineas) }
     }
 
     case 'terminal.write': {
-      if (!tiene('terminal.write')) throw new Error('sin permiso terminal.write')
+      if (!tiene('terminal.write')) throw new Error('permission denied: terminal.write')
       const viva = terminalActiva()
-      if (!viva) throw new Error('no hay ninguna terminal abierta')
+      if (!viva) throw new Error('no terminal is open')
       const pedido = (datos ?? {}) as { data?: unknown }
       if (typeof pedido.data !== 'string' || pedido.data.length === 0) {
-        throw new Error('terminal.write espera un texto en "data"')
+        throw new Error('terminal.write requires text in "data"')
       }
       if (!autorizaEscritura(entrada, pedido.data)) {
-        throw new Error('el usuario no autorizo la escritura')
+        throw new Error('the user did not approve this write')
       }
       await writePty(viva.ptyId, pedido.data)
       return { ok: true }
     }
 
     case 'llm.complete': {
-      if (!tiene('llm.complete')) throw new Error('sin permiso llm.complete')
+      if (!tiene('llm.complete')) throw new Error('permission denied: llm.complete')
       // El `plugin_id` lo pone el broker a partir de que iframe mando el
       // mensaje. Si lo eligiera el plugin, gastaria el presupuesto de otro.
       return await invoke('llm_complete', { pluginId: entrada.id, pedido: datos })
     }
 
     case 'commands.trigger': {
-      if (!tiene('commands')) throw new Error('sin permiso commands')
+      if (!tiene('commands')) throw new Error('permission denied: commands')
       const pedido = (datos ?? {}) as { id?: unknown }
-      if (typeof pedido.id !== 'string') throw new Error('commands.trigger espera un id')
+      if (typeof pedido.id !== 'string') throw new Error('commands.trigger requires an id')
       entrada.onComando?.(pedido.id)
       return { ok: true }
     }
 
     default:
-      throw new Error(`metodo desconocido: ${metodo}`)
+      throw new Error(`unknown method: ${metodo}`)
   }
 }
 
@@ -143,7 +143,7 @@ export function instalarBroker(): () => void {
         nova: 1,
         id,
         ok: false,
-        error: 'demasiados pedidos por segundo',
+        error: 'too many requests per second',
       })
       return
     }
@@ -153,7 +153,7 @@ export function instalarBroker(): () => void {
       responder(entrada.ventana, { nova: 1, id, ok: true, datos: resultado })
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err)
-      console.warn(`[plugin ${entrada.id}] ${metodo} rechazado: ${error}`)
+      console.warn(`[plugin ${entrada.id}] ${metodo} rejected: ${error}`)
       responder(entrada.ventana, { nova: 1, id, ok: false, error })
     }
   }

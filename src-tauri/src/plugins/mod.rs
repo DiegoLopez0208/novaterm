@@ -1,4 +1,6 @@
 pub mod instalar;
+mod widget;
+pub use widget::ejecutar_widget;
 
 #[cfg(test)]
 mod tests;
@@ -114,13 +116,13 @@ pub struct WidgetPlugin {
     pub command: String,
     #[serde(default)]
     pub args: Vec<String>,
-    #[serde(default = "intervalo_por_defecto")]
+    #[serde(default = "intervalo_por_defecto", alias = "interval_ms")]
     pub intervalo_ms: u64,
     /// Texto que se antepone a la salida, por ejemplo "git:".
-    #[serde(default)]
+    #[serde(default, alias = "prefix")]
     pub prefijo: String,
     /// Se ejecuta dentro del directorio actual de la terminal, si se conoce.
-    #[serde(default)]
+    #[serde(default, alias = "use_cwd")]
     pub usar_cwd: bool,
 }
 
@@ -255,46 +257,4 @@ pub fn leer_entry(plugin: &Plugin) -> Result<String, String> {
     let carpeta = Path::new(&plugin.carpeta);
     validar_entry(carpeta, entry)?;
     std::fs::read_to_string(carpeta.join(entry)).map_err(|e| e.to_string())
-}
-
-/// Ejecuta el comando de un widget y devuelve su salida en una linea.
-///
-/// El comando y los argumentos van separados hasta CreateProcess: no hay shell
-/// de por medio, asi que un manifiesto no puede encadenar comandos con `&&` ni
-/// expandir comodines.
-pub fn ejecutar_widget(widget: &WidgetPlugin, cwd: Option<&str>) -> Result<String, String> {
-    let mut comando = std::process::Command::new(&widget.command);
-    comando.args(&widget.args);
-
-    if widget.usar_cwd {
-        if let Some(dir) = cwd.filter(|d| Path::new(d).is_dir()) {
-            comando.current_dir(dir);
-        }
-    }
-
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        // CREATE_NO_WINDOW: sin esto, cada refresco del widget parpadea una
-        // consola negra encima de la terminal.
-        comando.creation_flags(0x0800_0000);
-    }
-
-    let salida = comando.output().map_err(|e| e.to_string())?;
-    if !salida.status.success() {
-        return Err(format!("salio con {}", salida.status));
-    }
-
-    let texto = String::from_utf8_lossy(&salida.stdout)
-        .lines()
-        .next()
-        .unwrap_or("")
-        .trim()
-        .to_string();
-
-    Ok(if texto.is_empty() {
-        String::new()
-    } else {
-        format!("{}{}", widget.prefijo, texto)
-    })
 }

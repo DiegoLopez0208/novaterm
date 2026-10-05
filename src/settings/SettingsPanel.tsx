@@ -3,9 +3,10 @@ import { Cerrar } from '../chrome/Iconos'
 import type { NovaConfig, Palette } from '../config/configBridge'
 import { fuentesDisponibles, TEMAS } from './presets'
 import { SeccionSSH } from './SeccionSSH'
-import { SeccionPerfiles } from './SeccionPerfiles'
+import { ProfilesSection } from './ProfilesSection'
+import { PluginsSection } from './PluginsSection'
 
-type Seccion = 'apariencia' | 'terminal' | 'colores' | 'perfiles' | 'ssh'
+type Seccion = 'apariencia' | 'terminal' | 'colores' | 'perfiles' | 'ssh' | 'plugins'
 
 interface Props {
   config: NovaConfig
@@ -26,11 +27,12 @@ const CLAVES_PALETA: (keyof Palette)[] = [
 ]
 
 const TITULOS: Record<Seccion, string> = {
-  apariencia: 'Apariencia',
+  apariencia: 'Appearance',
   terminal: 'Terminal',
-  colores: 'Colores',
-  perfiles: 'Perfiles',
+  colores: 'Colors',
+  perfiles: 'Profiles',
   ssh: 'SSH',
+  plugins: 'Plugins & AI',
 }
 
 export function SettingsPanel({ config, onChange, onClose, onCambioSSH }: Props) {
@@ -47,10 +49,10 @@ export function SettingsPanel({ config, onChange, onClose, onCambioSSH }: Props)
   return (
     <>
       <div className="settings-fondo" onClick={onClose} />
-      <aside className="settings" role="dialog" aria-label="Configuración">
+      <aside className="settings" role="dialog" aria-label="Settings">
         <header className="settings-head">
-          <strong>Configuración</strong>
-          <button className="icono" onClick={onClose} aria-label="Cerrar">
+          <strong>Settings</strong>
+          <button className="icono" onClick={onClose} aria-label="Close">
             <Cerrar tam={12} />
           </button>
         </header>
@@ -70,8 +72,8 @@ export function SettingsPanel({ config, onChange, onClose, onCambioSSH }: Props)
         <div className="settings-cuerpo">
           {seccion === 'apariencia' && (
             <>
-              <p className="grupo">Tipografía</p>
-              <Campo etiqueta="Fuente">
+              <p className="grupo">Typography</p>
+              <Campo etiqueta="Font">
                 <select
                   value={config.font.family}
                   onChange={(e) => set('font', { ...config.font, family: e.target.value })}
@@ -82,13 +84,13 @@ export function SettingsPanel({ config, onChange, onClose, onCambioSSH }: Props)
                     </option>
                   ))}
                   {!fuentes.some((f) => f.valor === config.font.family) && (
-                    <option value={config.font.family}>Personalizada</option>
+                    <option value={config.font.family}>Custom</option>
                   )}
                 </select>
               </Campo>
 
               <Deslizador
-                etiqueta="Tamaño"
+                etiqueta="Size"
                 valor={config.font.size}
                 min={8}
                 max={28}
@@ -98,7 +100,7 @@ export function SettingsPanel({ config, onChange, onClose, onCambioSSH }: Props)
               />
 
               <Deslizador
-                etiqueta="Alto de línea"
+                etiqueta="Line height"
                 valor={config.font.line_height}
                 min={0.8}
                 max={2}
@@ -107,7 +109,7 @@ export function SettingsPanel({ config, onChange, onClose, onCambioSSH }: Props)
               />
 
               <Deslizador
-                etiqueta="Espaciado"
+                etiqueta="Letter spacing"
                 valor={config.font.letter_spacing}
                 min={-2}
                 max={4}
@@ -117,10 +119,10 @@ export function SettingsPanel({ config, onChange, onClose, onCambioSSH }: Props)
               />
 
               <div className="separador" />
-              <p className="grupo">Ventana</p>
+              <p className="grupo">Window</p>
 
               <Deslizador
-                etiqueta="Opacidad del fondo"
+                etiqueta="Background opacity"
                 valor={config.window.opacity}
                 min={0.2}
                 max={1}
@@ -130,14 +132,14 @@ export function SettingsPanel({ config, onChange, onClose, onCambioSSH }: Props)
               />
 
               <Interruptor
-                etiqueta="Desenfoque de fondo"
-                nota="acrilico del compositor de Windows"
+                etiqueta="Background blur"
+                nota="Windows compositor acrylic"
                 valor={config.window.blur}
                 onChange={(v) => set('window', { ...config.window, blur: v })}
               />
 
               <Deslizador
-                etiqueta="Margen interno"
+                etiqueta="Padding"
                 valor={config.window.padding}
                 min={0}
                 max={40}
@@ -155,44 +157,44 @@ export function SettingsPanel({ config, onChange, onClose, onCambioSSH }: Props)
                   value={config.cursor.style}
                   onChange={(e) => set('cursor', { ...config.cursor, style: e.target.value })}
                 >
-                  <option value="bar">Barra</option>
-                  <option value="block">Bloque</option>
-                  <option value="underline">Subrayado</option>
+                  <option value="bar">Bar</option>
+                  <option value="block">Block</option>
+                  <option value="underline">Underline</option>
                 </select>
               </Campo>
 
               <Interruptor
-                etiqueta="Cursor parpadeante"
+                etiqueta="Blinking cursor"
                 valor={config.cursor.blink}
                 onChange={(v) => set('cursor', { ...config.cursor, blink: v })}
               />
 
               <div className="separador" />
-              <p className="grupo">Búfer</p>
+              <p className="grupo">Buffer</p>
 
               {/* El tope es por panel, no por ventana: con varias pestañas
-                  divididas se multiplica. 100.000 líneas por panel llevaban el
+                  divididas se multiplica. 100.000 lines per pane llevaban el
                   proceso a cifras absurdas sin que se notara de dónde salían. */}
               <Deslizador
-                etiqueta="Historial"
+                etiqueta="Scrollback"
                 valor={config.terminal.scrollback}
                 min={500}
                 max={50000}
                 paso={500}
-                formato={(v) => `${v.toLocaleString('es')} líneas por panel`}
+                formato={(v) => `${v.toLocaleString('en')} lines per pane`}
                 onChange={(v) =>
                   set('terminal', { ...config.terminal, scrollback: Math.round(v) })
                 }
               />
 
               <Interruptor
-                etiqueta="Copiar al seleccionar"
+                etiqueta="Copy on selection"
                 valor={config.terminal.copy_on_select}
                 onChange={(v) => set('terminal', { ...config.terminal, copy_on_select: v })}
               />
 
               <Interruptor
-                etiqueta="Ligaduras"
+                etiqueta="Ligatures"
                 valor={config.font.ligatures}
                 onChange={(v) => set('font', { ...config.font, ligatures: v })}
               />
@@ -200,34 +202,35 @@ export function SettingsPanel({ config, onChange, onClose, onCambioSSH }: Props)
               {/* Estas tres vivian solo en el config.toml, aunque el README
                   prometia que todo se cambia desde aca. */}
               <Interruptor
-                etiqueta="Dibujar con la GPU"
+                etiqueta="GPU rendering"
                 valor={config.terminal.gpu}
                 onChange={(v) => set('terminal', { ...config.terminal, gpu: v })}
               />
 
               <Interruptor
-                etiqueta="Bienvenida al abrir un panel"
+                etiqueta="Welcome on new pane"
                 valor={config.ui.welcome}
                 onChange={(v) => set('ui', { ...config.ui, welcome: v })}
               />
 
               <Interruptor
-                etiqueta="Barra de pestañas"
+                etiqueta="Tab bar"
                 valor={config.ui.tab_bar}
                 onChange={(v) => set('ui', { ...config.ui, tab_bar: v })}
               />
 
               <Interruptor
-                etiqueta="Barra de estado"
+                etiqueta="Status bar"
                 valor={config.ui.status_bar}
                 onChange={(v) => set('ui', { ...config.ui, status_bar: v })}
               />
             </>
           )}
 
-          {seccion === 'perfiles' && <SeccionPerfiles config={config} onChange={onChange} />}
+          {seccion === 'perfiles' && <ProfilesSection config={config} onChange={onChange} />}
 
           {seccion === 'ssh' && <SeccionSSH onCambio={onCambioSSH} />}
+          {seccion === 'plugins' && <PluginsSection config={config} onChange={onChange} />}
 
           {seccion === 'colores' && (
             <>
@@ -257,12 +260,12 @@ export function SettingsPanel({ config, onChange, onClose, onCambioSSH }: Props)
               <p className="grupo">Base</p>
 
               <Color
-                etiqueta="Fondo"
+                etiqueta="Background"
                 valor={config.colors.background}
                 onChange={(v) => set('colors', { ...config.colors, background: v })}
               />
               <Color
-                etiqueta="Texto"
+                etiqueta="Text"
                 valor={config.colors.foreground}
                 onChange={(v) => set('colors', { ...config.colors, foreground: v })}
               />
@@ -273,7 +276,7 @@ export function SettingsPanel({ config, onChange, onClose, onCambioSSH }: Props)
               />
 
               <div className="separador" />
-              <p className="grupo">Normales</p>
+              <p className="grupo">Normal</p>
               <div className="paleta-colores">
                 {CLAVES_PALETA.map((clave) => (
                   <input
@@ -291,7 +294,7 @@ export function SettingsPanel({ config, onChange, onClose, onCambioSSH }: Props)
                 ))}
               </div>
 
-              <p className="grupo">Brillantes</p>
+              <p className="grupo">Bright</p>
               <div className="paleta-colores">
                 {CLAVES_PALETA.map((clave) => (
                   <input

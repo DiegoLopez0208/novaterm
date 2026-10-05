@@ -42,7 +42,7 @@ export const WIDGETS: Widget[] = [
   },
   {
     id: 'paneles',
-    render: ({ paneles }) => (paneles > 1 ? `${paneles} paneles` : null),
+    render: ({ paneles }) => (paneles > 1 ? `${paneles} panes` : null),
   },
   {
     id: 'cpu',

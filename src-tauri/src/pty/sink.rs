@@ -5,8 +5,11 @@ use tauri::ipc::{Channel, InvokeResponseBody};
 /// un test o nada: solo empuja bytes. Sin esto el PTY solo se puede probar
 /// levantando Tauri entero.
 pub trait PtySink: Send + Sync + 'static {
-    fn data(&self, bytes: &[u8]);
+    fn data(&self, bytes: &[u8]) -> bool;
     fn exit(&self, code: Option<i32>);
+    fn requires_ack(&self) -> bool {
+        false
+    }
 }
 
 #[derive(Clone, Serialize)]
@@ -37,14 +40,19 @@ impl CanalSink {
 }
 
 impl PtySink for CanalSink {
-    fn data(&self, bytes: &[u8]) {
+    fn data(&self, bytes: &[u8]) -> bool {
         // Bytes crudos y no String: un caracter multibyte puede quedar partido
         // entre dos lecturas del PTY, y convertirlo aca lo reemplazaria por
         // U+FFFD. El decode incremental lo hace xterm del otro lado.
-        let _ = self.datos.send(InvokeResponseBody::Raw(bytes.to_vec()));
+        self.datos
+            .send(InvokeResponseBody::Raw(bytes.to_vec()))
+            .is_ok()
     }
 
     fn exit(&self, code: Option<i32>) {
         let _ = self.salida.send(ExitPayload { code });
+    }
+    fn requires_ack(&self) -> bool {
+        true
     }
 }

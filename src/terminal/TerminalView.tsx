@@ -259,6 +259,20 @@ export function TerminalView({
       ptyRef.current = id
 
       await bienvenida()
+      if (disposed) return
+
+      // Install input before output can arrive, including xterm's DSR replies.
+      // The bridge holds writes until the backend has published the session.
+      descartables.push(
+        term.onData((data) => {
+          void writePty(id, data).catch((error) => {
+            if (!disposed) term.write(`\r\n[PTY input failed: ${String(error)}]\r\n`)
+          })
+        }),
+        term.onResize(({ cols, rows }) => {
+          void resizePty(id, cols, rows).catch(() => {})
+        }),
+      )
 
       // Los dos callbacks viajan con el spawn como canales de IPC, asi que ya
       // estan escuchando cuando el backend abre el PTY: no hay ventana en la
@@ -270,7 +284,7 @@ export function TerminalView({
           cols: term.cols,
           rows: term.rows,
         },
-        (bytes) => term.write(bytes),
+        (bytes, parsed) => { if (!disposed) term.write(bytes, parsed) },
         ({ code }) => {
           term.write(
             `\r\n\x1b[38;5;244m[proceso terminado: ${code ?? 'sin codigo'}]\x1b[0m\r\n`,
@@ -284,21 +298,13 @@ export function TerminalView({
         return
       }
 
-      descartables.push(
-        term.onData((data) => {
-          void writePty(id, data)
-        }),
-        term.onResize(({ cols, rows }) => {
-          void resizePty(id, cols, rows)
-        }),
-      )
-
       registrar(panelIdRef.current, { term, ptyId: id })
+      void resizePty(id, term.cols, term.rows).catch(() => {})
       term.focus()
     }
 
     start().catch((err) => {
-      term.write(`\r\n\x1b[31mno se pudo abrir el shell: ${String(err)}\x1b[0m\r\n`)
+      term.write(`\r\n\x1b[31mCould not open shell: ${String(err)}\x1b[0m\r\n`)
     })
 
     const observer = new ResizeObserver(() => {

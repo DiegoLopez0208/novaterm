@@ -32,12 +32,12 @@ export function CommandPalette({ acciones, onCerrar }: Props) {
   return (
     <>
       <div className="paleta-fondo" onClick={onCerrar} />
-      <div className="paleta" role="dialog" aria-label="Paleta de comandos">
+      <div className="paleta" role="dialog" aria-label="Command palette">
         <input
           className="paleta-busqueda"
           autoFocus
           value={busqueda}
-          placeholder="Buscar una acción…"
+          placeholder="Search actions…"
           onChange={(e) => setBusqueda(e.target.value)}
           onKeyDown={(e) => {
             // La paleta se come sus teclas: si no, el atajo global las procesa
@@ -82,7 +82,7 @@ export function CommandPalette({ acciones, onCerrar }: Props) {
           ))}
 
           {resultados.length === 0 && (
-            <li className="paleta-vacio">Ninguna acción coincide con «{busqueda}»</li>
+            <li className="paleta-vacio">No actions match «{busqueda}»</li>
           )}
         </ul>
       </div>
