@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { atajo } from '../acciones/registro'
 import { Cerrar, ChevronAbajo, IconoPerfil, Mas } from '../chrome/Iconos'
 import { hojas, type Pestana } from './modelo'
+import { shortTitle } from './title'
 
 export interface PerfilDisponible {
   id: string
@@ -22,24 +23,6 @@ interface Props {
   onCerrar: (id: string) => void
   onNueva: (perfil?: PerfilDisponible) => void
   onRenombrar: (id: string, alias: string) => void
-}
-
-const NOMBRES: Record<string, string> = {
-  powershell: 'PowerShell',
-  pwsh: 'PowerShell 7',
-  cmd: 'CMD',
-  wsl: 'WSL',
-  bash: 'bash',
-  zsh: 'zsh',
-  ssh: 'ssh',
-}
-
-/// El shell reporta la ruta completa del ejecutable como titulo. En una pestaña
-/// angosta eso es ilegible, asi que se muestra el nombre del programa.
-export function nombreCorto(bruto: string): string {
-  const ultimo = bruto.split(/[\\/]/).pop() ?? bruto
-  const sinExtension = ultimo.replace(/\.exe$/i, '')
-  return NOMBRES[sinExtension.toLowerCase()] ?? sinExtension
 }
 
 /// Que shell corre la pestaña, para elegirle el icono. El modelo guarda el
@@ -68,7 +51,7 @@ export function TabBar({
     <div className="pestanas" role="tablist">
       {pestanas.map((pestana) => {
         const paneles = hojas(pestana.raiz).length
-        const etiqueta = pestana.alias ?? nombreCorto(pestana.titulo)
+        const etiqueta = pestana.alias ?? shortTitle(pestana.titulo)
         const esActiva = pestana.id === activa
         const icono = iconoDePestana(pestana, perfiles)
 

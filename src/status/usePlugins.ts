@@ -1,22 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
+import type { Plugin, WidgetPlugin } from '../plugins/tipos'
+import { PLUGINS_CHANGED } from '../plugins/events'
+import { createPoller } from './poller'
 import { useEnFoco } from './useEnFoco'
 
-export interface WidgetPlugin {
+interface InstalledWidget {
   id: string
-  command: string
-  args: string[]
-  intervalo_ms: number
-  prefijo: string
-  usar_cwd: boolean
+  widget: WidgetPlugin
 }
 
-export interface Plugin {
-  id: string
-  name: string
-  version: string
-  description: string
-  widgets: WidgetPlugin[]
+interface WidgetRequest {
+  widget: WidgetPlugin
+  cwd: string | null
 }
 
 export interface SalidaWidget {
@@ -24,58 +20,62 @@ export interface SalidaWidget {
   texto: string
 }
 
-/// Ejecuta los widgets que aportan los plugins y devuelve su salida.
-///
-/// Cada widget lleva su propio intervalo porque no todos cuestan lo mismo: la
-/// rama de git se puede mirar seguido, y un comando que consulta la red no.
+/** Poll installed widgets only while focused, with bounded concurrent work. */
 export function usePluginWidgets(cwd: string | null): SalidaWidget[] {
-  const enFoco = useEnFoco()
-  const [widgets, setWidgets] = useState<WidgetPlugin[]>([])
-  const [salidas, setSalidas] = useState<Record<string, string>>({})
-  // El cwd cambia mientras los temporizadores ya estan andando; en un ref se
-  // lee siempre el ultimo sin tener que rearmarlos.
-  const cwdRef = useRef(cwd)
-  cwdRef.current = cwd
+  const focused = useEnFoco()
+  const [widgets, setWidgets] = useState<InstalledWidget[]>([])
+  const [outputs, setOutputs] = useState<Record<string, string>>({})
+  const pollerRef = useRef<ReturnType<typeof createPoller<WidgetRequest>> | null>(null)
 
   useEffect(() => {
-    invoke<Plugin[]>('plugins_list')
-      .then((plugins) => setWidgets(plugins.flatMap((p) => p.widgets)))
-      .catch(() => setWidgets([]))
+    let alive = true
+    let generation = 0
+    const reload = () => {
+      const request = ++generation
+      void invoke<Plugin[]>('plugins_list')
+        .then((plugins) => {
+          if (!alive || request !== generation) return
+          setWidgets(plugins.flatMap((plugin) => plugin.widgets.map((widget) => ({
+            id: JSON.stringify([plugin.id, widget.id]),
+            widget,
+          }))))
+          setOutputs({})
+        })
+        .catch(() => {
+          if (alive && request === generation) setWidgets([])
+        })
+    }
+    reload()
+    window.addEventListener(PLUGINS_CHANGED, reload)
+    return () => {
+      alive = false
+      window.removeEventListener(PLUGINS_CHANGED, reload)
+    }
   }, [])
 
   useEffect(() => {
-    // Cada tick lanza un proceso externo: con la ventana atras no se corre.
-    if (widgets.length === 0 || !enFoco) return
-
-    const correr = (widget: WidgetPlugin) => {
-      invoke<string>('plugin_widget_run', { widget, cwd: cwdRef.current })
-        .then((texto) => setSalidas((previas) => ({ ...previas, [widget.id]: texto })))
-        .catch(() => {
-          // Un widget que falla (no esta git, o el directorio no es un repo) se
-          // esconde en vez de mostrar el error en la barra.
-          setSalidas((previas) => ({ ...previas, [widget.id]: '' }))
-        })
-    }
-
-    // Cada corrida lanza un proceso externo. La primera se demora un segundo
-    // para no pelear con el spawn del shell en el arranque.
-    const temporizadores: number[] = []
-    const arranque = window.setTimeout(() => {
-      for (const widget of widgets) {
-        correr(widget)
-        temporizadores.push(
-          window.setInterval(() => correr(widget), Math.max(1000, widget.intervalo_ms)),
-        )
-      }
-    }, 1000)
-
+    const poller = createPoller<WidgetRequest>(
+      ({ widget, cwd: directory }) => invoke<string>('plugin_widget_run', { widget, cwd: directory }),
+      (id, text) => setOutputs((previous) =>
+        previous[id] === text ? previous : { ...previous, [id]: text }),
+    )
+    pollerRef.current = poller
     return () => {
-      window.clearTimeout(arranque)
-      temporizadores.forEach((id) => window.clearInterval(id))
+      poller.dispose()
+      pollerRef.current = null
     }
-  }, [widgets, enFoco])
+  }, [])
+
+  useEffect(() => {
+    pollerRef.current?.setJobs(focused ? widgets.map(({ id, widget }) => ({
+      id,
+      intervalMs: widget.intervalo_ms,
+      value: { widget, cwd },
+    })) : [])
+    return () => pollerRef.current?.setJobs([])
+  }, [widgets, focused, cwd])
 
   return widgets
-    .map((widget) => ({ id: widget.id, texto: salidas[widget.id] ?? '' }))
-    .filter((salida) => salida.texto !== '')
+    .map(({ id }) => ({ id, texto: outputs[id] ?? '' }))
+    .filter((output) => output.texto !== '')
 }

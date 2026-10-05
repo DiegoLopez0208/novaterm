@@ -75,8 +75,8 @@ pub fn plugins_list() -> Vec<Plugin> {
 /// Corre el comando de un widget de plugin. El frontend lo llama con el
 /// intervalo que el propio plugin declara.
 #[tauri::command]
-pub fn plugin_widget_run(widget: WidgetPlugin, cwd: Option<String>) -> Result<String, String> {
-    ejecutar_widget(&widget, cwd.as_deref())
+pub async fn plugin_widget_run(widget: WidgetPlugin, cwd: Option<String>) -> Result<String, String> {
+    ejecutar_widget(&widget, cwd.as_deref()).await
 }
 
 #[tauri::command]

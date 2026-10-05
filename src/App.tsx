@@ -13,7 +13,8 @@ import { getCurrentWindow } from '@tauri-apps/api/window'
 import { useConfig } from './config/useConfig'
 import { conSimbolos, reloadConfig, withAlpha } from './config/configBridge'
 import { TitleBar } from './chrome/TitleBar'
-import { TabBar, nombreCorto } from './tabs/TabBar'
+import { TabBar } from './tabs/TabBar'
+import { shortTitle } from './tabs/title'
 import { PaneTree } from './panes/PaneTree'
 import { StatusBar } from './status/StatusBar'
 import { useTabs } from './tabs/useTabs'
@@ -274,7 +275,7 @@ export default function App() {
         (config.plugins.concedidos[p.id] ?? []).includes('ui.panel'),
     ) ?? null
 
-  const titulo = tabs.actual.alias ?? nombreCorto(tabs.actual.titulo)
+  const titulo = tabs.actual.alias ?? shortTitle(tabs.actual.titulo)
 
   return (
     <div className="app" style={tema}>

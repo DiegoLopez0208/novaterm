@@ -122,7 +122,7 @@ fn el_widget_ejecuta_y_devuelve_una_linea_con_prefijo() {
         usar_cwd: false,
     };
 
-    let salida = ejecutar_widget(&widget, None).unwrap();
+    let salida = tauri::async_runtime::block_on(ejecutar_widget(&widget, None)).unwrap();
 
     assert_eq!(salida, "eco:hola");
 }
@@ -138,5 +138,5 @@ fn un_comando_inexistente_devuelve_error_en_vez_de_panic() {
         usar_cwd: false,
     };
 
-    assert!(ejecutar_widget(&widget, None).is_err());
+    assert!(tauri::async_runtime::block_on(ejecutar_widget(&widget, None)).is_err());
 }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
+import { PLUGINS_CHANGED } from '../plugins/events'
 import {
   DESCRIPCION_PERMISO,
   esDelicado,
@@ -73,6 +74,7 @@ export function MarketplacePanel({ onCerrar }: Props) {
     setEstado('Bajando y verificando la firma...')
     try {
       await invoke('plugin_install', { id: ficha.id, version: null })
+      window.dispatchEvent(new Event(PLUGINS_CHANGED))
       // Los permisos se conceden despues de instalar: antes no hay manifiesto en
       // disco contra el cual validarlos.
       if (marcados.length > 0) {
@@ -92,6 +94,7 @@ export function MarketplacePanel({ onCerrar }: Props) {
     if (!window.confirm(`¿Desinstalar "${id}"? También se olvidan sus permisos.`)) return
     try {
       await invoke('plugin_uninstall', { id })
+      window.dispatchEvent(new Event(PLUGINS_CHANGED))
       recargarInstalados()
       setEstado(`"${id}" se desinstaló.`)
     } catch (err) {
