@@ -191,13 +191,15 @@ fn un_programa_interactivo_entra_en_modo_repl() {
         esperar_respondiendo_dsr(&manager, &id, &espia, 45, || espia.texto().contains('>'));
     assert!(arranco, "node nunca mostro el prompt: {:?}", espia.texto());
 
-    manager.write(&id, "2+2\r").expect("no se pudo escribir");
+    manager
+        .write(&id, "'NOVATERM_REPL_' + (2 + 2)\r")
+        .expect("no se pudo escribir");
 
-    // El REPL hace eco de lo tipeado y despues imprime el resultado, asi que
-    // "4" aparece solo en la respuesta. 40 s por lo mismo que el prompt: bajo
-    // carga, node tarda.
+    // The complete marker appears only in the evaluated result, never in the
+    // echoed expression. ConPTY may insert cursor/color escapes between a
+    // newline and the result, so asserting a literal "\n4" is not portable.
     let visto = esperar_respondiendo_dsr(&manager, &id, &espia, 40, || {
-        espia.texto().contains("\n4") || espia.texto().contains("\r\n4")
+        espia.texto().contains("NOVATERM_REPL_4")
     });
     let capturado = espia.texto();
     manager.close(&id).expect("no se pudo cerrar");
