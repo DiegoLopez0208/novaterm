@@ -54,18 +54,21 @@ Detached descendant containment still needs platform-specific process groups or
 Windows job objects. The current limits bound NovaTerm's capture buffers and
 requests, not arbitrary subprocess trees or third-party iframe CPU usage.
 
+The PTY transport and cancellation changes are described in `PTY-FLOW-CONTROL.md`.
 GitHub CI covers frontend and Windows backend checks. Linux/macOS native builds,
-PTY transport acknowledgements, releases, SDK packages, and full English
+releases, SDK packages, and full English
 migration are later change sets in `STABILITY-AND-RELEASE-PLAN.md`.
 
 ## Validation of this change set
 
-- Frontend: 64 tests pass; production build and lint with denied warnings pass.
-- Backend: 70 tests pass; the registry integration is skipped without its server.
+- Frontend: 76 tests pass; production build and lint with denied warnings pass.
+- Backend: 78 tests pass; the registry integration is skipped without its server.
   A second ignored entry is a subprocess fixture executed by the limit tests.
+- Windows executable: `npm run tauri -- build --debug --no-bundle` passes.
+  This confirms compilation with embedded assets; the GUI was not exercised.
 - The sampler was exercised against a disposable process, including descendant
   classification and CSV/metadata export. This is a harness smoke test, not a
   before/after NovaTerm resource benchmark.
 - Vitest was updated from 4.1.10 to the patched 4.1.11 after a dependency audit;
   [upstream advisory](https://github.com/advisories/GHSA-82fw-gwwq-j7x9).
-- CI is prepared locally; it has not yet run on GitHub.
+- GitHub CI status must be verified on the PR before merging.
