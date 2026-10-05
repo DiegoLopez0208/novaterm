@@ -22,6 +22,7 @@ import { crearManejador } from './portapapeles'
 import { construirBienvenida, type InfoSistema } from './bienvenida'
 import { BarraBusqueda } from './BarraBusqueda'
 import { marcarActivo, olvidar, registrar } from './registro'
+import { smoothScrollDuration, useMotionEnabled } from './motion'
 
 interface Props {
   config: NovaConfig
@@ -145,6 +146,10 @@ export function TerminalView({
   const buscadorRef = useRef<SearchAddon | null>(null)
   const webglRef = useRef<WebglAddon | null>(null)
   const [busqueda, setBusqueda] = useState(false)
+  const motionEnabled = useMotionEnabled(config.ui.animations, activo)
+  const scrollDuration = smoothScrollDuration(config.terminal.smooth_scroll_ms, motionEnabled)
+  const scrollDurationRef = useRef(scrollDuration)
+  scrollDurationRef.current = scrollDuration
   // La config y los callbacks viven en refs para que el efecto de arranque no
   // dependa de ellos. El padre crea funciones nuevas en cada render; si el
   // efecto las tuviera como dependencia, cerraria y volveria a abrir el shell
@@ -185,6 +190,7 @@ export function TerminalView({
       cursorBlink: inicial.cursor.blink,
       cursorStyle: estiloDeCursor(inicial.cursor.style),
       scrollback: inicial.terminal.scrollback,
+      smoothScrollDuration: scrollDurationRef.current,
       theme: construirTema(inicial),
     })
 
@@ -332,6 +338,11 @@ export function TerminalView({
     // Sin dependencias a proposito: este efecto abre el shell una sola vez por
     // panel. La config la aplica el efecto de abajo sobre la terminal ya viva.
   }, [])
+
+  // Updating visual motion never recreates a terminal or its PTY.
+  useEffect(() => {
+    if (termRef.current) termRef.current.options.smoothScrollDuration = scrollDuration
+  }, [scrollDuration])
 
   // Config en caliente sobre la terminal viva. Recrearla mataria el shell y
   // perderias el scrollback cada vez que tocas un color.

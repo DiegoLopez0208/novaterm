@@ -193,6 +193,23 @@ export function SettingsPanel({ config, onChange, onClose, onCambioSSH }: Props)
                 onChange={(v) => set('terminal', { ...config.terminal, copy_on_select: v })}
               />
 
+              <Deslizador
+                etiqueta="Smooth history scrolling"
+                valor={config.terminal.smooth_scroll_ms ?? 120}
+                min={0}
+                max={250}
+                paso={10}
+                formato={(v) => v === 0 ? 'Off' : `${v} ms`}
+                onChange={(v) => set('terminal', { ...config.terminal, smooth_scroll_ms: Math.round(v) })}
+              />
+              <p className="nota">Shorter durations feel more responsive. System reduced-motion preferences take priority.</p>
+
+              <Interruptor
+                etiqueta="Animations"
+                valor={config.ui.animations}
+                onChange={(v) => set('ui', { ...config.ui, animations: v })}
+              />
+
               <Interruptor
                 etiqueta="Ligatures"
                 valor={config.font.ligatures}

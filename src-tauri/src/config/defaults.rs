@@ -47,6 +47,7 @@ impl Default for TerminalConfig {
             // Por panel, no por ventana: cuatro paneles con el default viejo de
             // 10.000 lineas eran ~24 MB de buffer que casi nadie llega a mirar.
             scrollback: 5000,
+            smooth_scroll_ms: 120,
             copy_on_select: false,
             gpu: true,
         }
