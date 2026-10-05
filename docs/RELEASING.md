@@ -35,6 +35,11 @@ inspect the failed run and existing artifacts before retrying.
 Installers currently have no code-signing configuration. Linux/macOS and ARM64
 distribution require their own builds and validation before adding release targets.
 
+For a local artifact check without contacting GitHub, run
+`node scripts/draft-release.mjs v<version> --prepare-only` after building both
+installers. It rejects mismatched versions and creates `SHA256SUMS.txt`.
+App and bundled font license notices are included in the installers.
+
 ## Plugin SDK package
 
 Publishing a release triggers a separate workflow that checks out its tag,

@@ -33,6 +33,14 @@
   },
   "bundle": {
     "active": true,
+    "license": "MIT",
+    "licenseFile": "../LICENSE",
+    "copyright": "Copyright (c) 2026 DiegoLopez0208",
+    "resources": {
+      "../LICENSE": "licenses/LICENSE",
+      "../src/assets/fonts/LICENSE-NovaMono.md": "licenses/LICENSE-NovaMono.md",
+      "../src/assets/fonts/LICENSE-SymbolsNerdFont.txt": "licenses/LICENSE-SymbolsNerdFont.txt"
+    },
     "targets": "all",
     "icon": [
       "icons/32x32.png",

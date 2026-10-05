@@ -8,6 +8,14 @@ This document is an implementation plan. Runtime resource savings have not
 been measured during this audit. Existing README performance numbers are
 historical claims and must not be treated as a new benchmark.
 
+Implementation update: the working branch now includes bounded PTY transport,
+widget execution limits, English public documentation and primary UI text,
+English plugin API aliases and a typed SDK with examples, Windows draft-release
+and GitHub Packages workflows, and the owner-selected MIT license. The baseline
+table below describes the original checkout, not the updated branch. Internal
+identifier/comment migration, controlled resource comparisons and installer/GUI
+acceptance remain to be completed.
+
 ## Verified baseline
 
 | Check | Result |
