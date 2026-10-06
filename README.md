@@ -1,5 +1,7 @@
 # NovaTerm
 
+<img src="assets/logo.svg" width="72" height="72" alt="NovaTerm logo" />
+
 A desktop terminal built with **Tauri 2, Rust, React, and xterm.js**. Run native
 shells, organize tabs and split panes, customize colors and fonts, manage SSH
 profiles, and extend the application with plugins.

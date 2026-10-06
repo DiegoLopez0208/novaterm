@@ -1,11 +1,11 @@
 # NovaTerm mark
 
-The current proposal uses a geometric **N** followed by a terminal cursor.
+The NovaTerm logo uses a geometric **N** followed by a terminal cursor.
 Filled paths share a 512-unit grid; the mark has no font dependency. The desktop
 icon uses charcoal `#15191d`, warm white `#eaece5` and green `#a5ce8d`. Inside the
 application the mark follows the active theme's text and accent colors.
 
-`geometric.svg` is the editable proposal source. `retro.svg` and `industrial.svg`
+`geometric.svg` is the selected design source. `retro.svg` and `industrial.svg`
 are alternative directions, compared at 16, 24, 32 and 64 px in `proposals.png`.
 The previous mark remains available in Git history before this branch.
 
