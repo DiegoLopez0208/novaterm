@@ -1,0 +1,6 @@
+id = "example-timestamp-tools"
+name = "Timestamp tools"
+version = "0.1.0"
+description = "Convert Unix seconds, Unix milliseconds and ISO dates locally. Updates only when requested."
+entry = "index.js"
+permissions = ["ui.panel"]

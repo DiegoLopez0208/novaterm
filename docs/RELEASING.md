@@ -42,23 +42,33 @@ App and bundled font license notices are included in the installers.
 
 ## Plugin SDK package
 
-Publishing a release triggers a separate workflow that checks out its tag,
-validates versions, tests the SDK and publishes
-`@diegolopez0208/novaterm-plugin-sdk` to GitHub Packages using the workflow's
-`GITHUB_TOKEN` with `packages: write`. The desktop npm project remains private.
-The package has no runtime dependencies and includes only its module, types,
-manifest and README. A package version cannot be republished.
+The SDK is public on npm as `@diegolopez02081/novaterm-plugin-sdk`, starting at
+version 0.1.0. The npm account name differs from the GitHub username. Install it
+without GitHub registry configuration:
 
-Configure the scope in your npm client:
-
-```ini
-@diegolopez0208:registry=https://npm.pkg.github.com
+```sh
+npm install @diegolopez02081/novaterm-plugin-sdk
 ```
 
-GitHub Packages downloads require authentication with an appropriate token; keep
-credentials in your user configuration or secret store, never in the repository.
-The SDK is prepared but not yet published. NovaTerm and the SDK use the MIT
-license; bundled fonts retain their separate license notices.
+Publishing a release triggers `packages.yml`, which checks out its tag, validates
+versions, tests the SDK, skips versions already available on npm, and publishes
+new versions using OIDC. A package version cannot be republished. The desktop
+npm project remains private. SDK contents are limited to its module, types,
+manifest, README and MIT license; there are no runtime dependencies.
+
+**One-time account setup is still required before automatic publication of a new
+version.** In the npm package settings, configure a GitHub trusted publisher:
+owner `DiegoLopez0208`, repository `novaterm`, workflow `packages.yml`, permission
+to publish directly. Alternatively, with an interactive npm login and account 2FA:
+
+```sh
+npm trust github @diegolopez02081/novaterm-plugin-sdk --file packages.yml --repo DiegoLopez0208/novaterm --allow-publish
+```
+
+The credential available for the initial publication cannot perform this account
+change: npm rejects granular tokens that bypass 2FA for trusted publisher setup.
+No npm credential is stored in the repository or added to GitHub secrets.
+NovaTerm and the SDK use MIT; bundled fonts retain their separate notices.
 
 References: [Tauri Windows installers](https://v2.tauri.app/distribute/windows-installer/)
-and [GitHub npm registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry).
+and [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/).

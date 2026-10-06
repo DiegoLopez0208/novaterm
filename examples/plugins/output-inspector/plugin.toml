@@ -1,0 +1,6 @@
+id = "example-output-inspector"
+name = "Output inspector"
+version = "0.1.0"
+description = "Capture and filter the last 500 terminal lines on demand. No AI or terminal writes."
+entry = "index.js"
+permissions = ["ui.panel", "terminal.read"]

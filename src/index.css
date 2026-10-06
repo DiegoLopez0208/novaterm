@@ -1515,6 +1515,80 @@ body.redimensionando * {
 }
 
 /* Keep visual effects optional and respect the system motion preference. */
+/* Workspace surfaces: clear hierarchy without extra rendering dependencies. */
+.eyebrow { font-size: 10px; letter-spacing: .12em; font-weight: 600; color: var(--acento); }
+.app :is(button, input, select, textarea, summary):focus-visible { outline: 2px solid var(--acento); outline-offset: 3px; }
+.app button:disabled { opacity: .5; cursor: default; }
+.barra .accion { min-width: 28px; min-height: 26px; border-radius: 6px; }
+.pestana { border-radius: 7px 7px 0 0; }
+.pestana.activa { box-shadow: inset 0 2px var(--acento); }
+.settings-fondo { background: rgba(0,0,0,.28); z-index: 60; }
+.settings { z-index: 61; width: min(680px, 94vw); display: grid; grid-template-columns: 146px minmax(0, 1fr); grid-template-rows: 54px minmax(0, 1fr); }
+.settings-head { grid-column: 1 / -1; height: auto; padding: 0 20px; }
+.settings-head strong { font-size: 15px; letter-spacing: 0; font-weight: 600; }
+.settings-head .icono { width: 32px; height: 32px; }
+.settings-tabs { grid-column: 1; grid-row: 2; flex-direction: column; gap: 5px; padding: 16px 10px; border-bottom: 0; border-right: 1px solid var(--linea); background: var(--realce); }
+.settings-tabs button { flex: none; text-align: left; border: 1px solid transparent; border-radius: 7px; padding: 11px 12px; font-size: 12px; letter-spacing: 0; color: var(--tinta); opacity: .75; }
+.settings-tabs button.activa { border-color: var(--linea); background: var(--fondo); color: var(--acento); opacity: 1; }
+.settings-cuerpo { grid-column: 2; grid-row: 2; min-width: 0; padding: 24px; }
+.settings-intro { margin-bottom: 26px; }
+.settings-intro h2 { font-size: 22px; margin: 7px 0; font-weight: 600; }
+.settings-intro p { margin: 0; color: var(--tinta); opacity: .75; font-size: 12px; }
+.settings .campo { color: var(--tinta); font-size: 12px; margin-bottom: 19px; }
+.settings .nota { color: var(--tinta); opacity: .78; line-height: 1.7; }
+.installed-plugin-settings { border: 1px solid var(--linea); border-radius: 10px; padding: 16px; margin: 12px 0; background: var(--realce); }
+.installed-plugin-settings small { font-weight: 400; opacity: .65; }
+.installed-plugin-settings .campo { display: grid; grid-template-columns: minmax(0,1fr) 24px; align-items: center; gap: 14px; margin: 10px 0 0; padding: 10px 0; border-top: 1px solid var(--linea); line-height: 1.6; cursor: pointer; }
+.installed-plugin-settings input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--acento); }
+.marketplace { width: min(840px, 94vw); max-height: 86vh; margin-top: 5vh; background: var(--fondo); box-shadow: 0 24px 80px rgba(0,0,0,.45); }
+.marketplace header { padding: 23px 24px 18px; align-items: flex-start; }
+.marketplace h2 { font-size: 25px; margin-top: 6px; letter-spacing: -.04em; }
+.marketplace header p { font-size: 12px; margin: 7px 0 0; opacity: .75; }
+.marketplace header button { min-width: 32px; min-height: 32px; font-size: 22px; color: var(--tinta); }
+.library-nav { display: flex; gap: 8px; padding: 14px 24px 0; }
+.marketplace button { font: inherit; color: var(--tinta); background: var(--realce); border: 1px solid var(--linea); border-radius: 7px; padding: 8px 12px; cursor: pointer; min-height: 32px; }
+.marketplace button:hover:not(:disabled) { border-color: var(--acento); }
+.library-nav button { background: transparent; border-color: transparent; }
+.library-nav button[aria-pressed="true"] { background: var(--realce); border-color: var(--linea); color: var(--acento); }
+.library-nav span { font-size: 10px; padding: 2px 6px; border-radius: 10px; background: var(--realce); }
+.marketplace .buscador { padding: 16px 24px; border-bottom: none; }
+.marketplace .buscador input { min-width: 0; padding: 11px 13px; }
+.library-content { overflow: auto; min-height: 0; padding: 0 24px 24px; }
+.plugin-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); list-style: none; gap: 12px; padding: 0; margin: 0; }
+.plugin-card { padding: 18px; border: 1px solid var(--linea); border-radius: 11px; background: var(--realce); display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.plugin-card-heading { display: flex; align-items: center; gap: 12px; }
+.plugin-card h3 { font-size: 14px; font-weight: 600; margin: 0; overflow-wrap: anywhere; }
+.plugin-mark { display: grid; place-items: center; flex: 0 0 38px; height: 38px; border-radius: 9px; background: var(--fondo); border: 1px solid var(--linea); color: var(--acento); font-size: 13px; }
+.plugin-meta { font-size: 10px; opacity: .75; display: inline-block; margin-top: 5px; }
+.plugin-card p { font-size: 12px; line-height: 1.7; opacity: .85; margin: 0; }
+.plugin-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.plugin-tags span { font-size: 10px; border: 1px solid var(--linea); border-radius: 5px; padding: 4px 6px; overflow-wrap: anywhere; }
+.plugin-card-actions { margin-top: auto; display: flex; flex-wrap: wrap; gap: 7px; padding-top: 4px; }
+.marketplace .primary { background: var(--acento); color: var(--fondo); border-color: var(--acento); font-weight: 600; }
+.library-empty { text-align: center; padding: 32px 20px; border: 1px dashed var(--linea); border-radius: 10px; }
+.library-empty h3 { margin: 0 0 10px; font-size: 16px; }
+.library-empty p { line-height: 1.7; opacity: .8; max-width: 460px; margin: 0 auto 16px; overflow-wrap: anywhere; }
+.library-notice { margin: 0 24px 20px; border: 1px solid var(--linea); border-radius: 10px; padding: 16px; line-height: 1.7; overflow: auto; }
+.library-notice p { font-size: 12px; overflow-wrap: anywhere; }
+.library-notice summary { cursor: pointer; }
+.library-footer { padding: 12px 24px; border-top: 1px solid var(--linea); font-size: 10px; opacity: .8; }
+.panel-plugin { top: 80px; bottom: 36px; width: min(420px, calc(100vw - 24px)); background: var(--fondo); box-shadow: 0 16px 48px rgba(0,0,0,.4); }
+.panel-plugin header { padding: 12px 16px; color: var(--tinta); font-size: 13px; }
+.panel-plugin header button { width: 32px; height: 32px; font-size: 18px; }
+.marketplace .consentimiento { padding: 24px; min-height: 0; }
+.marketplace .consentimiento h3 { font-size: 22px; margin-top: 10px; }
+.marketplace .permisos li { border: 1px solid var(--linea); border-radius: 7px; padding: 12px; margin-bottom: 8px; }
+.marketplace .estado { color: var(--tinta); padding: 12px 24px; line-height: 1.6; }
+@media (max-width: 600px) {
+  .plugin-grid { grid-template-columns: 1fr; }
+  .settings { grid-template-columns: minmax(0,1fr); grid-template-rows: 48px auto minmax(0,1fr); }
+  .settings-tabs { grid-column: 1; grid-row: 2; flex-direction: row; overflow-x: auto; padding: 8px; border-right: 0; }
+  .settings-tabs button { white-space: nowrap; }
+  .settings-cuerpo { grid-column: 1; grid-row: 3; padding: 18px; }
+  .marketplace header, .marketplace .buscador { padding-left: 16px; padding-right: 16px; }
+  .library-content { padding-left: 16px; padding-right: 16px; }
+}
+
 .app[data-animations="off"] *,
 .app[data-animations="off"] *::before,
 .app[data-animations="off"] *::after {

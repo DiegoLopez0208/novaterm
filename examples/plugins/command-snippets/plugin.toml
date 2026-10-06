@@ -1,0 +1,6 @@
+id = "example-command-snippets"
+name = "Command snippets"
+version = "0.1.0"
+description = "Review useful Git and npm commands, then insert one into the terminal without pressing Enter."
+entry = "index.js"
+permissions = ["ui.panel", "terminal.write"]

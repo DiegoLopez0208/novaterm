@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { filtrar, formatearAtajo, type Accion } from '../acciones/registro'
+import { useDialogFocus } from '../chrome/useDialogFocus'
 
 interface Props {
   acciones: Accion[]
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export function CommandPalette({ acciones, onCerrar }: Props) {
+  const dialog = useDialogFocus(onCerrar)
   const [busqueda, setBusqueda] = useState('')
   const [seleccion, setSeleccion] = useState(0)
   const listaRef = useRef<HTMLUListElement>(null)
@@ -32,12 +34,13 @@ export function CommandPalette({ acciones, onCerrar }: Props) {
   return (
     <>
       <div className="paleta-fondo" onClick={onCerrar} />
-      <div className="paleta" role="dialog" aria-label="Command palette">
+      <div className="paleta" ref={dialog} role="dialog" aria-modal="true" aria-label="Command palette" tabIndex={-1}>
         <input
           className="paleta-busqueda"
           autoFocus
           value={busqueda}
           placeholder="Search actions…"
+          aria-label="Search actions"
           onChange={(e) => setBusqueda(e.target.value)}
           onKeyDown={(e) => {
             // La paleta se come sus teclas: si no, el atajo global las procesa

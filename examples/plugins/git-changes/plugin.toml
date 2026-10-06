@@ -1,0 +1,12 @@
+id = "example-git-changes"
+name = "Git changes"
+version = "0.1.0"
+description = "Show a compact Git diff summary in the status bar. Polls every 30 seconds while active; requires Git."
+
+[[widgets]]
+id = "changes"
+command = "git"
+args = ["diff", "--shortstat"]
+interval_ms = 30000
+prefix = "diff: "
+use_cwd = true

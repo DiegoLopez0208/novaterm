@@ -58,8 +58,8 @@ export function PluginsSection({ config, onChange }: Props) {
       <p className="nota">Approve each capability explicitly. Terminal writes ask for confirmation unless the plugin is already trusted in your configuration.</p>
       {plugins.length === 0 && <p className="nota">No local plugins found. Copy an example to ~/.novaterm/plugins and restart NovaTerm.</p>}
       {plugins.map((plugin) => (
-        <section key={plugin.id}>
-          <strong>{plugin.name}</strong>
+        <section key={plugin.id} className="installed-plugin-settings">
+          <strong>{plugin.name} <small>v{plugin.version}</small></strong>
           <p className="nota">{plugin.description}</p>
           {plugin.permissions.map((permission) => (
             <label className="campo" key={permission}>
@@ -69,7 +69,7 @@ export function PluginsSection({ config, onChange }: Props) {
                 onChange={(event) => { void grant(plugin, permission, event.target.checked) }} />
             </label>
           ))}
-          {plugin.permissions.length === 0 && <p className="nota">Declarative plugin: no API permissions.</p>}
+          {plugin.permissions.length === 0 && <p className="nota">No sandbox API permissions. Widgets may execute the commands listed in their manifest.</p>}
         </section>
       ))}
 

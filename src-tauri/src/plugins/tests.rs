@@ -2,6 +2,27 @@ use std::path::PathBuf;
 
 use super::{descubrir, ejecutar_widget, leer_manifiesto, WidgetPlugin};
 
+#[test]
+fn starter_plugins_are_valid_and_discoverable_with_their_public_ids() {
+    let source = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../examples/plugins");
+    let plugins = descubrir(&source);
+    assert_eq!(plugins.len(), 7);
+    let mut ids = std::collections::HashSet::new();
+    for plugin in plugins {
+        assert!(ids.insert(plugin.id.clone()), "duplicate plugin ID");
+        assert!(plugin.id.starts_with("example-"));
+        assert_eq!(plugin.version, "0.1.0");
+        if let Some(entry) = plugin.entry {
+            assert!(PathBuf::from(&plugin.carpeta).join(entry).is_file());
+            assert!(plugin.permissions.contains(&super::Permiso::UiPanel));
+        }
+        for widget in plugin.widgets {
+            assert!(widget.intervalo_ms >= 10000);
+            assert_eq!(widget.command, "git");
+        }
+    }
+}
+
 fn carpeta(nombre: &str) -> PathBuf {
     let dir = std::env::temp_dir().join(format!(
         "novaterm-plugins-{}-{}",

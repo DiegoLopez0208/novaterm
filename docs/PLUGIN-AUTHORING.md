@@ -1,7 +1,9 @@
 # Writing NovaTerm plugins
 
 Copy an example directory from `examples/plugins` to `~/.novaterm/plugins/`.
-Keep each plugin in its own directory containing `plugin.toml`. Restart NovaTerm
+Keep each plugin in its own directory containing `plugin.toml`, using its manifest
+ID as the folder name. `scripts/install-example-plugins.ps1` handles this for the
+seven [starter plugins](../examples/plugins/README.md). Restart NovaTerm
 after manually copying a directory. Marketplace installs refresh discovery.
 The default catalog is local; these examples do not require a running registry.
 
@@ -32,15 +34,18 @@ The host injects `globalThis.nova` with `apiVersion: 1`:
 | `ai.complete(messages, { max_tokens })` | `llm.complete` | `{ text, tokens, remaining }` |
 | `commands.trigger(id)` | `commands` | `{ ok: true }` |
 
-Use the SDK in `packages/plugin-sdk` for TypeScript definitions. Existing
+Install `@diegolopez02081/novaterm-plugin-sdk` from npm for TypeScript definitions.
+The source lives in `packages/plugin-sdk`. Existing
 `terminal.leer/escribir`, `ia.preguntar` and `comandos.disparar` APIs remain
 available. Legacy AI responses keep `restante`; the English API maps it to
 `remaining` without changing the broker protocol.
 
 The output explainer only requests AI after a button click. Open Settings →
 Plugins & AI to configure a provider and key and approve its declared permissions
-first. It never writes
-to the shell. Opening the command palette entry opens the plugin panel.
+first. It never writes to the shell. Open a panel through **Plugins → Installed →
+Open panel** or **Open <plugin name>** in the command palette. Missing panel
+permission takes you to the plugin permission settings rather than granting it
+automatically. After approval, return to the library to open the panel.
 
 The iframe restricts capabilities but does not impose a hard CPU limit on plugin
 JavaScript. Keep work brief, avoid continuous loops, and clear timers on teardown.

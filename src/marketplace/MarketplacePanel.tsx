@@ -1,207 +1,141 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { PLUGINS_CHANGED } from '../plugins/events'
-import {
-  DESCRIPCION_PERMISO,
-  esDelicado,
-  type Ficha,
-  type Permiso,
-  type Plugin,
-} from '../plugins/tipos'
-
-/// Catalogo de plugins: buscar, ver que pide cada uno, instalar y desinstalar.
-///
-/// La pantalla de consentimiento es la parte que importa. Instalar no concede
-/// nada: hasta que el usuario marque los permisos, el broker rechaza todo. Por
-/// eso se listan por su consecuencia y los delicados van marcados, en vez de
-/// mostrar una lista de nombres tecnicos que nadie lee.
+import { useDialogFocus } from '../chrome/useDialogFocus'
+import { DESCRIPCION_PERMISO, esDelicado, type Ficha, type Permiso, type Plugin } from '../plugins/tipos'
 
 interface Props {
   onCerrar: () => void
+  onOpen: (plugin: Plugin) => void
 }
 
-export function MarketplacePanel({ onCerrar }: Props) {
-  const [consulta, setConsulta] = useState('')
-  const [fichas, setFichas] = useState<Ficha[]>([])
-  const [instalados, setInstalados] = useState<Plugin[]>([])
-  const [elegida, setElegida] = useState<Ficha | null>(null)
-  const [marcados, setMarcados] = useState<Permiso[]>([])
-  const [estado, setEstado] = useState<string | null>(null)
-  const [cargando, setCargando] = useState(false)
+export function MarketplacePanel({ onCerrar, onOpen }: Props) {
+  const dialog = useDialogFocus(onCerrar)
+  const [view, setView] = useState<'discover' | 'installed'>('installed')
+  const [query, setQuery] = useState('')
+  const [catalog, setCatalog] = useState<Ficha[]>([])
+  const [installed, setInstalled] = useState<Plugin[]>([])
+  const [selected, setSelected] = useState<Ficha | null>(null)
+  const [permissions, setPermissions] = useState<Permiso[]>([])
+  const [message, setMessage] = useState('')
+  const [registryError, setRegistryError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const sequence = useRef(0)
 
-  const recargarInstalados = useCallback(() => {
-    void invoke<Plugin[]>('plugins_list')
-      .then(setInstalados)
-      .catch(() => setInstalados([]))
+  const reloadInstalled = useCallback(async () => {
+    try { setInstalled(await invoke<Plugin[]>('plugins_list')) }
+    catch (error) { setMessage(`Could not load installed plugins: ${error}`) }
   }, [])
+  useEffect(() => { void reloadInstalled() }, [reloadInstalled])
+  useEffect(() => () => { sequence.current += 1 }, [])
 
-  useEffect(recargarInstalados, [recargarInstalados])
-
-  const buscar = useCallback(
-    (texto: string) => {
-      setCargando(true)
-      setEstado(null)
-      invoke<Ficha[]>('market_buscar', { consulta: texto })
-        .then(setFichas)
-        .catch((err) => setEstado(`Could not connect to the registry: ${err}`))
-        .finally(() => setCargando(false))
-    },
-    [],
-  )
-
-  // Una sola busqueda vacia al abrir, para que el catalogo no aparezca en
-  // blanco. No se relanza al tipear: cada tecla seria un viaje al registro.
-  useEffect(() => {
-    buscar('')
-  }, [buscar])
-
-  const abrir = (ficha: Ficha) => {
-    setElegida(ficha)
-    // Nada viene marcado de entrada. Un permiso preseleccionado se concede solo
-    // con apurarse, que es justo lo que hay que evitar.
-    setMarcados([])
-    setEstado(null)
-  }
-
-  const alternar = (permiso: Permiso) => {
-    setMarcados((previos) =>
-      previos.includes(permiso) ? previos.filter((p) => p !== permiso) : [...previos, permiso],
-    )
-  }
-
-  const instalar = async (ficha: Ficha) => {
-    setCargando(true)
-    setEstado('Downloading and verifying signature...')
+  const search = useCallback(async (text: string) => {
+    const request = ++sequence.current
+    setLoading(true)
+    setRegistryError('')
     try {
-      await invoke('plugin_install', { id: ficha.id, version: null })
+      const result = await invoke<Ficha[]>('market_buscar', { consulta: text })
+      if (request === sequence.current) setCatalog(result)
+    } catch (error) {
+      if (request === sequence.current) setRegistryError(`Registry unavailable: ${error}`)
+    } finally { if (request === sequence.current) setLoading(false) }
+  }, [])
+  useEffect(() => { if (view === 'discover') void search('') }, [view, search])
+
+  const install = async (plugin: Ficha) => {
+    setBusy(true)
+    setMessage('Downloading and verifying the plugin signature…')
+    try {
+      await invoke('plugin_install', { id: plugin.id, version: null })
       window.dispatchEvent(new Event(PLUGINS_CHANGED))
-      // Los permisos se conceden despues de instalar: antes no hay manifiesto en
-      // disco contra el cual validarlos.
-      if (marcados.length > 0) {
-        await invoke('plugin_conceder', { id: ficha.id, permisos: marcados })
+      await reloadInstalled()
+      setMessage(`${plugin.name} installed.`)
+      if (permissions.length) {
+        try { await invoke('plugin_conceder', { id: plugin.id, permisos: permissions }) }
+        catch (error) { setMessage(`${plugin.name} installed, but permissions could not be saved: ${error}. Open Settings → Plugins & AI to retry.`) }
       }
-      setEstado(`"${ficha.name}" was installed.`)
-      setElegida(null)
-      recargarInstalados()
-    } catch (err) {
-      setEstado(`Installation failed: ${err}`)
-    } finally {
-      setCargando(false)
-    }
+      setSelected(null)
+      setView('installed')
+    } catch (error) { setMessage(`Installation failed: ${error}`) }
+    finally { setBusy(false) }
   }
-
-  const desinstalar = async (id: string) => {
-    if (!window.confirm(`Uninstall "${id}"? Its permissions will also be removed.`)) return
+  const uninstall = async (plugin: Plugin) => {
+    if (!window.confirm(`Uninstall "${plugin.name}"? Its permissions will also be removed.`)) return
+    setBusy(true)
     try {
-      await invoke('plugin_uninstall', { id })
+      await invoke('plugin_uninstall', { id: plugin.id })
       window.dispatchEvent(new Event(PLUGINS_CHANGED))
-      recargarInstalados()
-      setEstado(`"${id}" was uninstalled.`)
-    } catch (err) {
-      setEstado(`Could not uninstall: ${err}`)
-    }
+      await reloadInstalled()
+      setMessage(`${plugin.name} uninstalled.`)
+    } catch (error) { setMessage(`Could not uninstall: ${error}`) }
+    finally { setBusy(false) }
   }
 
-  const estaInstalado = (id: string) => instalados.some((p) => p.id === id)
-
+  const local = installed.filter((plugin) => `${plugin.name} ${plugin.description}`.toLowerCase().includes(query.toLowerCase()))
   return (
-    <div className="paleta-fondo" onMouseDown={onCerrar}>
-      <div className="marketplace" onMouseDown={(e) => e.stopPropagation()}>
+    <div className="paleta-fondo" onMouseDown={() => { if (!busy) onCerrar() }}>
+      <div className="marketplace" role="dialog" aria-modal="true" aria-labelledby="plugin-title"
+        ref={dialog} tabIndex={-1} onMouseDown={(event) => event.stopPropagation()}>
         <header>
-          <h2>Plugins</h2>
-          <button type="button" onClick={onCerrar} title="Close">
-            ✕
-          </button>
+          <div><span className="eyebrow">YOUR WORKSPACE, EXTENDED</span><h2 id="plugin-title">Plugin library</h2>
+            <p>Small tools that make your terminal yours.</p></div>
+          <button type="button" onClick={onCerrar} disabled={busy} aria-label="Close plugin library">×</button>
         </header>
-
-        <form
-          className="buscador"
-          onSubmit={(e) => {
-            e.preventDefault()
-            buscar(consulta)
-          }}
-        >
-          <input
-            value={consulta}
-            onChange={(e) => setConsulta(e.target.value)}
-            placeholder="Search catalog"
-            autoFocus
-          />
-          <button type="submit" disabled={cargando}>
-            Search
-          </button>
+        <nav className="library-nav" aria-label="Plugin library views">
+          <button type="button" aria-pressed={view === 'installed'} disabled={busy}
+            onClick={() => { setView('installed'); setSelected(null); setQuery('') }}>Installed <span>{installed.length}</span></button>
+          <button type="button" aria-pressed={view === 'discover'} disabled={busy}
+            onClick={() => { setView('discover'); setSelected(null); setQuery('') }}>Discover</button>
+        </nav>
+        <form className="buscador" role="search" onSubmit={(event) => {
+          event.preventDefault(); if (view === 'discover') void search(query)
+        }}>
+          <input type="search" value={query} onChange={(event) => setQuery(event.target.value)}
+            aria-label="Search plugins" placeholder={view === 'installed' ? 'Filter installed plugins…' : 'Search the registry…'} disabled={busy} />
+          {view === 'discover' && <button type="submit" disabled={loading || busy}>Search</button>}
         </form>
-
-        {estado && <p className="estado">{estado}</p>}
-
-        {elegida ? (
-          <section className="consentimiento">
-            <h3>{elegida.name}</h3>
-            <p>{elegida.description}</p>
-
-            {elegida.permissions.length === 0 ? (
-              <p className="sin-permisos">
-                No API permissions requested: this plugin contributes widgets and profiles.
-              </p>
-            ) : (
-              <>
-                <p className="grupo">This plugin requests permission to:</p>
-                <ul className="permisos">
-                  {elegida.permissions.map((permiso) => (
-                    <li key={permiso} className={esDelicado(permiso) ? 'delicado' : undefined}>
-                      <label>
-                        <input
-                          type="checkbox"
-                          checked={marcados.includes(permiso)}
-                          onChange={() => alternar(permiso)}
-                        />
-                        <span>{DESCRIPCION_PERMISO[permiso]}</span>
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-                <p className="aviso">
-                  Unchecked permissions remain denied.
-                </p>
-              </>
-            )}
-
-            <div className="acciones">
-              <button type="button" onClick={() => setElegida(null)}>
-                Back
-              </button>
-              <button type="button" disabled={cargando} onClick={() => void instalar(elegida)}>
-                Install
-              </button>
-            </div>
-          </section>
-        ) : (
-          <ul className="catalogo">
-            {fichas.map((ficha) => (
-              <li key={ficha.id}>
-                <div>
-                  <strong>{ficha.name}</strong>
-                  <p>{ficha.description}</p>
-                  {ficha.permissions.some(esDelicado) && (
-                    <em className="delicado">Requests terminal access</em>
-                  )}
-                </div>
-                {estaInstalado(ficha.id) ? (
-                  <button type="button" onClick={() => void desinstalar(ficha.id)}>
-                    Uninstall
-                  </button>
-                ) : (
-                  <button type="button" onClick={() => abrir(ficha)}>
-                    View
-                  </button>
-                )}
-              </li>
-            ))}
-            {fichas.length === 0 && !cargando && (
-              <li className="vacio">The catalog is empty.</li>
-            )}
-          </ul>
-        )}
+        {message && <p className="estado" role="status">{message}</p>}
+        {view === 'discover' && registryError && <div className="library-notice" role="status">
+          <strong>The registry could not be reached</strong><p>Your installed plugins are still available. Check the registry address in your configuration.</p>
+          <details><summary>Connection details</summary><p>{registryError}</p></details>
+          <button type="button" disabled={loading || busy} onClick={() => { void search(query) }}>Retry connection</button>
+        </div>}
+        {selected ? <section className="consentimiento">
+          <span className="eyebrow">REVIEW BEFORE INSTALLING</span><h3>{selected.name}</h3><p>{selected.description}</p>
+          <p className="nota">Version {selected.versions[0]?.version ?? 'unknown'} · {selected.id}</p>
+          <p className="grupo">Choose capabilities to allow</p>
+          <ul className="permisos">{selected.permissions.map((permission) => <li key={permission} className={esDelicado(permission) ? 'delicado' : undefined}>
+            <label><input type="checkbox" disabled={busy} checked={permissions.includes(permission)} onChange={() => setPermissions((current) => current.includes(permission) ? current.filter((item) => item !== permission) : [...current, permission])} />
+              <span>{DESCRIPCION_PERMISO[permission]}</span></label>
+          </li>)}</ul>
+          <p className="nota">{selected.permissions.length ? 'Unchecked capabilities remain denied. You can change them later in Settings.' : 'No sandbox API permissions requested. Declarative widgets may run the commands listed in their manifest.'}</p>
+          <div className="acciones"><button type="button" disabled={busy} onClick={() => setSelected(null)}>Back</button>
+            <button type="button" className="primary" disabled={busy || !selected.versions.length} onClick={() => { void install(selected) }}>{busy ? 'Installing…' : 'Install plugin'}</button></div>
+        </section> : <div className="library-content" aria-busy={loading || busy}>
+          {view === 'installed' ? <>
+            <ul className="plugin-grid">{local.map((plugin) => <li className="plugin-card" key={plugin.id}>
+              <div className="plugin-card-heading"><span className="plugin-mark" aria-hidden="true">{plugin.name.slice(0, 2).toUpperCase()}</span>
+                <div><h3>{plugin.name}</h3><span className="plugin-meta">v{plugin.version} · {plugin.entry ? 'Panel' : 'Widget / profile'}</span></div></div>
+              <p>{plugin.description}</p><div className="plugin-tags">{plugin.permissions.map((permission) => <span key={permission}>{permission}</span>)}</div>
+              <div className="plugin-card-actions">{plugin.entry && <button type="button" className="primary" disabled={busy} onClick={() => onOpen(plugin)}>Open panel</button>}
+                <button type="button" disabled={busy} onClick={() => { void uninstall(plugin) }}>Uninstall</button></div>
+            </li>)}</ul>
+            {!local.length && <div className="library-empty"><h3>{installed.length ? 'No matching plugins' : 'Make room for your tools'}</h3>
+              <p>{installed.length ? 'Try a different name or clear the search.' : 'Discover plugins in the registry, or copy a starter plugin into ~/.novaterm/plugins and restart NovaTerm.'}</p>
+              {!installed.length && <button type="button" onClick={() => setView('discover')}>Explore the registry</button>}</div>}
+          </> : <>
+            {loading && <p role="status" className="library-empty">Loading plugins…</p>}
+            {!loading && !registryError && <ul className="plugin-grid">{catalog.map((plugin) => <li className="plugin-card" key={plugin.id}>
+              <div className="plugin-card-heading"><span className="plugin-mark" aria-hidden="true">{plugin.name.slice(0, 2).toUpperCase()}</span><h3>{plugin.name}</h3></div>
+              <p>{plugin.description}</p><div className="plugin-tags">{plugin.permissions.some(esDelicado) && <span>Terminal access</span>}{plugin.permissions.includes('llm.complete') && <span>Uses AI provider</span>}</div>
+              <div className="plugin-card-actions">{installed.some((item) => item.id === plugin.id) ? <span className="plugin-meta">Installed · manage in Installed</span> :
+                <button type="button" disabled={busy} onClick={() => { setSelected(plugin); setPermissions([]); setMessage('') }}>Review plugin</button>}</div>
+            </li>)}</ul>}
+            {!loading && !registryError && !catalog.length && <div className="library-empty"><h3>No plugins found</h3><p>Try another search. The registry may not have published plugins yet.</p></div>}
+          </>}
+        </div>}
+        <footer className="library-footer">You control permissions. Installed panels open on demand.</footer>
       </div>
     </div>
   )
