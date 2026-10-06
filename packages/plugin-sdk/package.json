@@ -1,5 +1,5 @@
 {
-  "name": "@diegolopez0208/novaterm-plugin-sdk",
+  "name": "@diegolopez02081/novaterm-plugin-sdk",
   "version": "0.1.0",
   "description": "Typed API for NovaTerm sandboxed panel plugins",
   "type": "module",
@@ -14,5 +14,6 @@
     "url": "https://github.com/DiegoLopez0208/novaterm.git",
     "directory": "packages/plugin-sdk"
   },
-  "publishConfig": { "registry": "https://npm.pkg.github.com" }
+  "publishConfig": { "registry": "https://registry.npmjs.org", "access": "public" },
+  "keywords": ["novaterm", "terminal", "plugins", "sdk", "tauri"]
 }

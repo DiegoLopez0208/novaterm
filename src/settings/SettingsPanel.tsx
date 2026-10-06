@@ -5,6 +5,7 @@ import { fuentesDisponibles, TEMAS } from './presets'
 import { SeccionSSH } from './SeccionSSH'
 import { ProfilesSection } from './ProfilesSection'
 import { PluginsSection } from './PluginsSection'
+import { useDialogFocus } from '../chrome/useDialogFocus'
 
 type Seccion = 'apariencia' | 'terminal' | 'colores' | 'perfiles' | 'ssh' | 'plugins'
 
@@ -13,6 +14,7 @@ interface Props {
   onChange: (config: NovaConfig) => void
   onClose: () => void
   onCambioSSH: () => void
+  initialSection?: Seccion
 }
 
 const CLAVES_PALETA: (keyof Palette)[] = [
@@ -35,8 +37,9 @@ const TITULOS: Record<Seccion, string> = {
   plugins: 'Plugins & AI',
 }
 
-export function SettingsPanel({ config, onChange, onClose, onCambioSSH }: Props) {
-  const [seccion, setSeccion] = useState<Seccion>('apariencia')
+export function SettingsPanel({ config, onChange, onClose, onCambioSSH, initialSection = 'apariencia' }: Props) {
+  const [seccion, setSeccion] = useState<Seccion>(initialSection)
+  const dialog = useDialogFocus<HTMLElement>(onClose)
   // Solo las que estan instaladas de verdad: elegir una que falta no cambiaria
   // nada en pantalla y pareceria un bug.
   const fuentes = useMemo(fuentesDisponibles, [])
@@ -49,7 +52,7 @@ export function SettingsPanel({ config, onChange, onClose, onCambioSSH }: Props)
   return (
     <>
       <div className="settings-fondo" onClick={onClose} />
-      <aside className="settings" role="dialog" aria-label="Settings">
+      <aside className="settings" role="dialog" aria-modal="true" aria-label="Settings" ref={dialog} tabIndex={-1}>
         <header className="settings-head">
           <strong>Settings</strong>
           <button className="icono" onClick={onClose} aria-label="Close">
@@ -62,6 +65,7 @@ export function SettingsPanel({ config, onChange, onClose, onCambioSSH }: Props)
             <button
               key={s}
               className={s === seccion ? 'activa' : ''}
+              aria-pressed={s === seccion}
               onClick={() => setSeccion(s)}
             >
               {TITULOS[s]}
@@ -70,6 +74,7 @@ export function SettingsPanel({ config, onChange, onClose, onCambioSSH }: Props)
         </nav>
 
         <div className="settings-cuerpo">
+          <div className="settings-intro"><span className="eyebrow">PERSONALIZE NOVATERM</span><h2>{TITULOS[seccion]}</h2><p>Changes are saved automatically.</p></div>
           {seccion === 'apariencia' && (
             <>
               <p className="grupo">Typography</p>

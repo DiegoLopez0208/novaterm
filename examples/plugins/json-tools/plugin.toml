@@ -1,0 +1,6 @@
+id = "example-json-tools"
+name = "JSON tools"
+version = "0.1.0"
+description = "Format, validate and minify pasted JSON locally. No terminal or network access."
+entry = "index.js"
+permissions = ["ui.panel"]

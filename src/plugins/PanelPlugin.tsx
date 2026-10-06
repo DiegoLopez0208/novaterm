@@ -29,10 +29,26 @@ function documento(codigo: string): string {
 <style>
   :root { color-scheme: dark }
   body {
-    margin: 0; padding: 10px;
-    font: 12px/1.5 monospace;
+    margin: 0; padding: 18px;
+    font: 13px/1.6 system-ui, sans-serif;
     color: #d8dee9; background: transparent;
   }
+  * { box-sizing: border-box }
+  h2 { margin: 0 0 8px; font-size: 19px }
+  p { color: #b6bfd0; margin: 0 0 16px }
+  button, input, select, textarea {
+    font: inherit; color: #d8dee9; background: #171c29;
+    border: 1px solid #424d63; border-radius: 7px; padding: 9px 11px;
+  }
+  button { cursor: pointer; margin: 0 6px 10px 0 }
+  button:hover { border-color: #84a0c6 }
+  button:disabled { opacity: .5; cursor: default }
+  :focus-visible { outline: 2px solid #84a0c6; outline-offset: 2px }
+  textarea { display: block; width: 100%; min-height: 120px; resize: vertical; margin: 8px 0 14px; font-family: monospace }
+  input, select { max-width: 100%; margin: 6px 0 12px }
+  label { display: block; margin-top: 10px }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.7 monospace; padding: 12px; border: 1px solid #424d63; border-radius: 7px }
+  [role="status"] { color: #b6bfd0 }
 </style>
 </head><body>
 <script>${SANDBOX_BRIDGE}</script>
@@ -61,6 +77,8 @@ export function PanelPlugin({ plugin, concedidos, confianza, onComando, onCerrar
   // darselo solo para esto abriria un agujero mucho mayor que el que cierra.
   useEffect(() => {
     let vigente = true
+    setCodigo(null)
+    setError(null)
     invoke<string>('plugin_entry', { id: plugin.id })
       .then((fuente) => {
         if (vigente) setCodigo(fuente)
@@ -93,7 +111,7 @@ export function PanelPlugin({ plugin, concedidos, confianza, onComando, onCerrar
     <aside className="panel-plugin">
       <header>
         <span>{plugin.name}</span>
-        <button type="button" onClick={onCerrar} title="Close panel">
+        <button type="button" onClick={onCerrar} title="Close panel" aria-label="Close plugin panel">
           ✕
         </button>
       </header>

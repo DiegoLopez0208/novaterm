@@ -4,7 +4,6 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type CSSProperties,
 } from 'react'
@@ -18,10 +17,11 @@ import { shortTitle } from './tabs/title'
 import { PaneTree } from './panes/PaneTree'
 import { StatusBar } from './status/StatusBar'
 import { useTabs } from './tabs/useTabs'
-import { coincide, construirAcciones, EVENTO_BUSCAR } from './acciones/registro'
+import { coincide, construirAcciones, EVENTO_BUSCAR, type Accion } from './acciones/registro'
 import { hojas } from './tabs/modelo'
 import { instalarBroker } from './plugins/host'
 import type { Plugin } from './plugins/tipos'
+import { PLUGINS_CHANGED } from './plugins/events'
 
 // Ninguno de los dos se ve al arrancar, y juntos arrastran los presets de temas
 // y el editor de SSH. Fuera del bundle inicial son menos JS que parsear antes
@@ -58,6 +58,7 @@ export interface Profile {
 
 export default function App() {
   const [ajustes, setAjustes] = useState(false)
+  const [settingsSection, setSettingsSection] = useState<'apariencia' | 'plugins'>('apariencia')
   const [mercado, setMercado] = useState(false)
   /// Cual plugin tiene el panel abierto. Uno solo por vez: son iframes, y tener
   /// varios vivos cuesta lo mismo que tener varias pestanas.
@@ -98,6 +99,10 @@ export default function App() {
       .catch(() => setPlugins([]))
   }, [])
   useEffect(recargarPlugins, [recargarPlugins])
+  useEffect(() => {
+    window.addEventListener(PLUGINS_CHANGED, recargarPlugins)
+    return () => window.removeEventListener(PLUGINS_CHANGED, recargarPlugins)
+  }, [recargarPlugins])
 
   // El borde de la ventana lo dibuja el compositor, no el HTML, asi que hay que
   // avisarle cada vez que cambia el color de acento del tema.
@@ -137,7 +142,7 @@ export default function App() {
     [config, update],
   )
 
-  const acciones = useMemo(
+  const coreActions = useMemo(
     () =>
       config
         ? construirAcciones({
@@ -154,8 +159,8 @@ export default function App() {
             dividir: tabs.dividir,
             cerrarPanel: tabs.cerrarPanelActivo,
             moverPanel: (delta) => tabs.moverPanel(delta > 0 ? 1 : -1),
-            abrirAjustes: () => setAjustes((v) => !v),
-            abrirPlugins: () => setMercado(true),
+            abrirAjustes: () => { setSettingsSection('apariencia'); setAjustes((v) => !v) },
+            abrirPlugins: () => { setAjustes(false); setMercado(true) },
             alternarPaleta: () => setPaleta((v) => !v),
             buscar: () => window.dispatchEvent(new CustomEvent(EVENTO_BUSCAR)),
             pantallaCompleta: () => {
@@ -174,8 +179,25 @@ export default function App() {
     [config, perfilesVisibles, tabs, update, zoom, redetectarShells],
   )
 
+  const openPlugin = useCallback((plugin: Plugin) => {
+    setMercado(false)
+    setPaleta(false)
+    if (!(config?.plugins.concedidos[plugin.id] ?? []).includes('ui.panel')) {
+      setSettingsSection('plugins')
+      setAjustes(true)
+      return
+    }
+    setPanelAbierto(plugin.id)
+  }, [config?.plugins.concedidos])
+  const acciones = useMemo<Accion[]>(() => [...coreActions, ...plugins
+    .filter((plugin) => plugin.entry && plugin.permissions.includes('ui.panel'))
+    .map((plugin) => ({ id: `plugin.open.${plugin.id}`, titulo: `Open ${plugin.name}`, grupo: 'Plugins', ejecutar: () => openPlugin(plugin) }))],
+  [coreActions, plugins, openPlugin])
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Overlay controls own their keyboard input, including Escape and Tab.
+      if (document.querySelector('[aria-modal="true"]')) return
       // Siempre con preventDefault: sin eso la tecla sigue viaje hasta xterm y
       // termina escrita en el shell.
       for (const accion of acciones) {
@@ -217,10 +239,10 @@ export default function App() {
   // **No usar requestAnimationFrame aca.** WebView2 no dibuja cuadros mientras
   // la ventana esta oculta, asi que los callbacks de rAF pueden no correr nunca.
   // Los temporizadores si corren.
-  const retirado = useRef(false)
   useEffect(() => {
-    if (!config || retirado.current) return
-    retirado.current = true
+    // StrictMode replays effects in development. Do not mark the splash as
+    // retired before the scheduled removal actually runs.
+    if (!config || !document.getElementById('splash')) return
 
     const id = window.setTimeout(() => {
       const splash = document.getElementById('splash')
@@ -283,8 +305,8 @@ export default function App() {
         title={titulo}
         colors={config.colors}
         paneles={hojas(tabs.actual.raiz).length}
-        onSettings={() => setAjustes((v) => !v)}
-        onPlugins={() => setMercado(true)}
+        onSettings={() => { setSettingsSection('apariencia'); setMercado(false); setAjustes((v) => !v) }}
+        onPlugins={() => { setAjustes(false); setMercado(true) }}
         onDividir={tabs.dividir}
         onCerrarPanel={tabs.cerrarPanelActivo}
       />
@@ -345,6 +367,7 @@ export default function App() {
             onChange={update}
             onClose={() => setAjustes(false)}
             onCambioSSH={recargarPerfiles}
+            initialSection={settingsSection}
           />
         </Suspense>
       )}
@@ -358,6 +381,7 @@ export default function App() {
       {mercado && (
         <Suspense fallback={null}>
           <MarketplacePanel
+            onOpen={openPlugin}
             onCerrar={() => {
               setMercado(false)
               recargarPlugins()

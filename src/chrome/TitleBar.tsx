@@ -128,7 +128,7 @@ export function TitleBar({
           <Plugins />
         </button>
 
-        <button className="accion" onClick={onSettings} title={`Settings — ${atajo('app.ajustes')}`}>
+        <button className="accion" onClick={onSettings} aria-label="Settings" title={`Settings — ${atajo('app.ajustes')}`}>
           <Ajustes />
         </button>
 

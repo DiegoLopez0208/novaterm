@@ -6,7 +6,7 @@ on:
 
 permissions:
   contents: read
-  packages: write
+  id-token: write
 
 concurrency:
   group: plugin-sdk-publish
@@ -23,14 +23,18 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24'
-          registry-url: https://npm.pkg.github.com
-          scope: '@diegolopez0208'
+          registry-url: https://registry.npmjs.org
       - run: node scripts/check-version.mjs "$RELEASE_TAG"
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
       - run: npm test
         working-directory: packages/plugin-sdk
-      - run: npm publish
+      - run: npm install --global npm@11
+      - name: Publish SDK if this version is not already public
+        shell: bash
+        run: |
+          node -e 'fetch("https://registry.npmjs.org/" + encodeURIComponent("@diegolopez02081/novaterm-plugin-sdk") + "/" + JSON.parse(require("fs").readFileSync("package.json")).version).then(r => { if (r.ok) process.exit(0); if (r.status === 404) process.exit(10); throw Error("Registry lookup failed: " + r.status) }).catch(e => { console.error(e); process.exit(1) })' && exit 0
+          status=$?
+          if [ "$status" -ne 10 ]; then exit "$status"; fi
+          npm publish --access public
         working-directory: packages/plugin-sdk
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -5,8 +5,9 @@ shells, organize tabs and split panes, customize colors and fonts, manage SSH
 profiles, and extend the application with plugins.
 
 Windows is covered by native CI. Linux and macOS support is being validated;
-cross-platform installers are not yet published. Downloadable releases and a
-plugin SDK are prepared through the [release workflow](docs/RELEASING.md).
+cross-platform installers are not yet published. Windows installers are prepared
+through the [release workflow](docs/RELEASING.md). The plugin SDK is
+[available on npm](https://www.npmjs.com/package/@diegolopez02081/novaterm-plugin-sdk).
 
 ## Features
 
@@ -126,9 +127,12 @@ sandboxed iframes with a broker for `terminal.read`, `terminal.write`,
 `ui.panel`, `llm.complete`, and `commands`. Installing a plugin does not grant
 its requested permissions. API keys remain in the native credential store.
 Manage installed plugin permissions and provider credentials in **Settings →
-Plugins & AI**. Start with the [local examples](examples/plugins) and
+Plugins & AI**. Open installed panels from **Plugins → Installed → Open panel**
+or the command palette. The library works with local plugins even when the
+registry is unavailable. Start with the [seven starter plugins](examples/plugins/README.md) and
 [authoring guide](docs/PLUGIN-AUTHORING.md). The typed SDK lives in
-[`packages/plugin-sdk`](packages/plugin-sdk).
+[`packages/plugin-sdk`](packages/plugin-sdk) and can be installed with
+`npm install @diegolopez02081/novaterm-plugin-sdk`.
 
 The marketplace currently defaults to a **self-hosted local registry** at
 `http://127.0.0.1:8787`. Archive hashes and publisher signatures are checked

@@ -30,7 +30,10 @@ jobs:
         working-directory: packages/plugin-sdk
       - run: npm run lint -- --deny-warnings
       - run: npm test
+      - run: npm run test:plugins
       - run: npm run build
+      - run: npx playwright install chromium
+      - run: npm run test:ui
 
   backend-windows:
     runs-on: windows-latest
