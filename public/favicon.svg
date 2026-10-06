@@ -1,24 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- Version para 16 y 32 px: la misma marca sin la tira ANSI ni el destello,
-       que a ese tamaño se vuelven una mancha, y con la N mas grande y de trazo
-       mas grueso para que se lea en la barra de tareas. -->
-  <defs>
-    <linearGradient id="fondo" x1="0" y1="0" x2="0.35" y2="1">
-      <stop offset="0" stop-color="#20253a"/>
-      <stop offset="1" stop-color="#0b0d15"/>
-    </linearGradient>
-    <radialGradient id="nova" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#84a0c6" stop-opacity="0.5"/>
-      <stop offset="1" stop-color="#84a0c6" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-
-  <rect width="512" height="512" rx="114" fill="url(#fondo)"/>
-  <circle cx="256" cy="256" r="200" fill="url(#nova)"/>
-
-  <g fill="none" stroke-width="72" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M146 386 V 126" stroke="#e8edf5"/>
-    <path d="M366 386 V 126" stroke="#e8edf5"/>
-    <path d="M146 126 L 366 386" stroke="#84a0c6"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="88" fill="#15191d"/>
+  <path d="M112 368V112h64l144 156V112h64v256h-64L176 212v156Z" fill="#eaece5"/>
+  <path d="M304 408h80v32h-80Z" fill="#a5ce8d"/>
 </svg>
