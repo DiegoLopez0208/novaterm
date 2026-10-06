@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="612" viewBox="0 0 1200 612">
+  <style>text{font-family:Segoe UI,Arial,sans-serif;fill:#15191d}.label{font-size:11px;letter-spacing:2px;fill:#626a60}.title{font-size:20px;font-weight:600}.description{font-size:12px;fill:#626a60}</style>
+  <rect width="1200" height="612" fill="#f0f1e9"/>
+  <text x="32" y="51" font-size="26" font-weight="600">NovaTerm / mark exploration</text>
+  <text x="32" y="80" class="description">Flat geometry. Three directions. Native SVG, shown at app-icon and taskbar sizes.</text>
+  <rect x="32" y="112" width="356" height="440" rx="16" fill="#ffffff" stroke="#d6d8d0"/>
+    <text x="60" y="149" class="label">01 / GEOMETRIC</text>
+    <svg x="114" y="180" width="192" height="192" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="88" fill="#15191d"/>
+  <path d="M112 368V112h64l144 156V112h64v256h-64L176 212v156Z" fill="#eaece5"/>
+  <path d="M304 408h80v32h-80Z" fill="#a5ce8d"/>
+
+</svg>
+    <text x="60" y="408" class="title">Custom N + cursor</text><svg x="60" y="434" width="16" height="16" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="88" fill="#15191d"/>
+  <path d="M112 368V112h64l144 156V112h64v256h-64L176 212v156Z" fill="#eaece5"/>
+  <path d="M304 408h80v32h-80Z" fill="#a5ce8d"/>
+
+</svg><svg x="134" y="434" width="24" height="24" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="88" fill="#15191d"/>
+  <path d="M112 368V112h64l144 156V112h64v256h-64L176 212v156Z" fill="#eaece5"/>
+  <path d="M304 408h80v32h-80Z" fill="#a5ce8d"/>
+
+</svg><svg x="208" y="434" width="32" height="32" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="88" fill="#15191d"/>
+  <path d="M112 368V112h64l144 156V112h64v256h-64L176 212v156Z" fill="#eaece5"/>
+  <path d="M304 408h80v32h-80Z" fill="#a5ce8d"/>
+
+</svg><svg x="282" y="434" width="64" height="64" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="88" fill="#15191d"/>
+  <path d="M112 368V112h64l144 156V112h64v256h-64L176 212v156Z" fill="#eaece5"/>
+  <path d="M304 408h80v32h-80Z" fill="#a5ce8d"/>
+
+</svg>
+    <text x="60" y="530" class="description">A quiet, recognizable monogram.</text><rect x="412" y="112" width="356" height="440" rx="16" fill="#ffffff" stroke="#d6d8d0"/>
+    <text x="440" y="149" class="label">02 / RETRO</text>
+    <svg x="494" y="180" width="192" height="192" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#15191d"/>
+  <path d="M112 144h48v48h48v48h48v48h-48v48h-48v48h-48v-48h48v-48h48v-48h-48v-48h-48Z" fill="#a5ce8d"/>
+  <path d="M288 336h112v48H288Z" fill="#eaece5"/>
+
+</svg>
+    <text x="440" y="408" class="title">Pixel prompt</text><svg x="440" y="434" width="16" height="16" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#15191d"/>
+  <path d="M112 144h48v48h48v48h48v48h-48v48h-48v48h-48v-48h48v-48h48v-48h-48v-48h-48Z" fill="#a5ce8d"/>
+  <path d="M288 336h112v48H288Z" fill="#eaece5"/>
+
+</svg><svg x="514" y="434" width="24" height="24" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#15191d"/>
+  <path d="M112 144h48v48h48v48h48v48h-48v48h-48v48h-48v-48h48v-48h48v-48h-48v-48h-48Z" fill="#a5ce8d"/>
+  <path d="M288 336h112v48H288Z" fill="#eaece5"/>
+
+</svg><svg x="588" y="434" width="32" height="32" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#15191d"/>
+  <path d="M112 144h48v48h48v48h48v48h-48v48h-48v48h-48v-48h48v-48h48v-48h-48v-48h-48Z" fill="#a5ce8d"/>
+  <path d="M288 336h112v48H288Z" fill="#eaece5"/>
+
+</svg><svg x="662" y="434" width="64" height="64" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#15191d"/>
+  <path d="M112 144h48v48h48v48h48v48h-48v48h-48v48h-48v-48h48v-48h48v-48h-48v-48h-48Z" fill="#a5ce8d"/>
+  <path d="M288 336h112v48H288Z" fill="#eaece5"/>
+
+</svg>
+    <text x="440" y="530" class="description">A direct nod to early terminals.</text><rect x="792" y="112" width="356" height="440" rx="16" fill="#ffffff" stroke="#d6d8d0"/>
+    <text x="820" y="149" class="label">03 / INDUSTRIAL</text>
+    <svg x="874" y="180" width="192" height="192" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#15191d"/>
+  <path d="m104 128 144 128-144 128h88l144-128-144-128Z" fill="#e7a96b"/>
+  <path d="M288 344h120v40H288Z" fill="#eaece5"/>
+
+</svg>
+    <text x="820" y="408" class="title">Cut prompt</text><svg x="820" y="434" width="16" height="16" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#15191d"/>
+  <path d="m104 128 144 128-144 128h88l144-128-144-128Z" fill="#e7a96b"/>
+  <path d="M288 344h120v40H288Z" fill="#eaece5"/>
+
+</svg><svg x="894" y="434" width="24" height="24" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#15191d"/>
+  <path d="m104 128 144 128-144 128h88l144-128-144-128Z" fill="#e7a96b"/>
+  <path d="M288 344h120v40H288Z" fill="#eaece5"/>
+
+</svg><svg x="968" y="434" width="32" height="32" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#15191d"/>
+  <path d="m104 128 144 128-144 128h88l144-128-144-128Z" fill="#e7a96b"/>
+  <path d="M288 344h120v40H288Z" fill="#eaece5"/>
+
+</svg><svg x="1042" y="434" width="64" height="64" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#15191d"/>
+  <path d="m104 128 144 128-144 128h88l144-128-144-128Z" fill="#e7a96b"/>
+  <path d="M288 344h120v40H288Z" fill="#eaece5"/>
+
+</svg>
+    <text x="820" y="530" class="description">A bold command-line silhouette.</text>
+  <text x="32" y="589" class="description">16 · 24 · 32 · 64 px / all artwork uses filled paths on a shared 512-unit grid.</text>
+</svg>

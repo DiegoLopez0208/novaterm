@@ -124,15 +124,9 @@ export function Maximizar({ tam }: Props) {
 /// a 14 px y herede el color del chrome.
 export function Marca({ tam = 14 }: Props) {
   return (
-    <svg className="marca" viewBox="0 0 16 16" width={tam} height={tam} aria-hidden="true">
-      <path
-        d="M4 13V3l8 10V3"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+    <svg className="marca" viewBox="0 0 512 512" width={tam} height={tam} aria-hidden="true">
+      <path d="M112 368V112h64l144 156V112h64v256h-64L176 212v156Z" fill="currentColor" />
+      <path d="M304 408h80v32h-80Z" fill="var(--acento, currentColor)" />
     </svg>
   )
 }

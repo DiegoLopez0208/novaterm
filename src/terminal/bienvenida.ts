@@ -14,8 +14,7 @@ export interface InfoSistema {
   novaterm: string
 }
 
-/// La N de NovaTerm en bloques, con la diagonal aparte para poder pintarla con
-/// el color de acento igual que en el icono de la app.
+/// The geometric NovaTerm monogram, with an accent cursor below it.
 ///
 /// Se genera en vez de escribirse a mano por un motivo concreto: la celda de
 /// una terminal mide mas o menos el doble de alto que de ancho, asi que una
@@ -41,11 +40,13 @@ function dibujarMarca(): string[] {
     // pisa. Es a proposito: asi el trazo aterriza en el pie de la N, igual que
     // en el icono. Frenarlo antes dejaba dos filas identicas al final.
     const inicio = Math.round(GROSOR + (y * (ANCHO_MARCA - 2 * GROSOR)) / (ALTO_MARCA - 1))
-    for (let x = inicio; x < Math.min(inicio + GROSOR, ANCHO_MARCA); x++) celdas[x] = '%'
+    for (let x = inicio; x < Math.min(inicio + GROSOR, ANCHO_MARCA); x++) celdas[x] = '#'
 
     filas.push(celdas.join(''))
   }
 
+  filas.push(' '.repeat(ANCHO_MARCA))
+  filas.push(' '.repeat(ANCHO_MARCA - 4) + '%%%%')
   return filas
 }
 
