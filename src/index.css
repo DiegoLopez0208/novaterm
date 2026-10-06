@@ -1513,3 +1513,18 @@ body.redimensionando * {
   gap: 8px;
   margin-top: 16px;
 }
+
+/* Keep visual effects optional and respect the system motion preference. */
+.app[data-animations="off"] *,
+.app[data-animations="off"] *::before,
+.app[data-animations="off"] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app *, .app *::before, .app *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

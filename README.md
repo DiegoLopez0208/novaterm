@@ -136,6 +136,14 @@ before installation. A public catalog has not been deployed.
 
 ## Resource use and stability
 
+History scrolling uses a short 120 ms transition by default. Adjust **Smooth
+history scrolling** in **Settings → Terminal** (0 disables it; maximum 250 ms),
+or set `smooth_scroll_ms` in `[terminal]` in your config. The **Animations**
+switch controls UI transitions and history motion. System reduced-motion
+preferences take priority. Inactive panes and hidden windows scroll instantly.
+This affects visual scrolling; PTY output continues to be parsed without an
+animation delay. Cursor trails are not implemented.
+
 Output is batched into packets of at most 64 KiB. A per-session credit window
 limits unparsed IPC bytes to 256 KiB, alongside a bounded native reader queue.
 Input is serialized and bounded; resizes are coalesced. Closing a session

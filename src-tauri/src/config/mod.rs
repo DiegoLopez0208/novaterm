@@ -89,6 +89,8 @@ pub struct CursorConfig {
 #[serde(default)]
 pub struct TerminalConfig {
     pub scrollback: u32,
+    /// History scroll animation duration; zero disables it.
+    pub smooth_scroll_ms: u32,
     pub copy_on_select: bool,
     /// Dibujar con la GPU (WebGL). Apagalo si tu driver hace cosas raras:
     /// el renderer del DOM siempre funciona, pero gasta mas CPU.

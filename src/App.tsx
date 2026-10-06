@@ -278,7 +278,7 @@ export default function App() {
   const titulo = tabs.actual.alias ?? shortTitle(tabs.actual.titulo)
 
   return (
-    <div className="app" style={tema}>
+    <div className="app" style={tema} data-animations={config.ui.animations ? 'on' : 'off'}>
       <TitleBar
         title={titulo}
         colors={config.colors}

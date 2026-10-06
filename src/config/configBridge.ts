@@ -47,6 +47,7 @@ export interface NovaConfig {
   }
   terminal: {
     scrollback: number
+    smooth_scroll_ms: number
     copy_on_select: boolean
     gpu: boolean
   }

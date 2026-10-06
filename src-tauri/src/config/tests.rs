@@ -21,6 +21,7 @@ background = "#000000"
     // Lo que no vino queda en el default, no en cero.
     assert_eq!(config.window.opacity, 0.88);
     assert_eq!(config.terminal.scrollback, 5000);
+    assert_eq!(config.terminal.smooth_scroll_ms, 120);
     assert_eq!(config.colors.normal.red, "#e27878");
     assert!(config.font.family.contains("Nerd Font"));
 }
@@ -35,6 +36,7 @@ fn el_config_sobrevive_la_ida_y_vuelta_a_toml() {
     assert_eq!(vuelta.font.family, original.font.family);
     assert_eq!(vuelta.colors.bright.white, original.colors.bright.white);
     assert_eq!(vuelta.cursor.style, original.cursor.style);
+    assert_eq!(vuelta.terminal.smooth_scroll_ms, original.terminal.smooth_scroll_ms);
 }
 
 #[test]
