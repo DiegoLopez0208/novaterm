@@ -8,6 +8,7 @@ assert.equal(json('package-lock.json').version, version);
 assert.equal(json('package-lock.json').packages[''].version, version);
 assert.equal(json('src-tauri/tauri.conf.json').version, version);
 assert.equal(json('packages/plugin-sdk/package.json').version, version);
+assert.equal(json('packages/launcher/package.json').version, version);
 const cargo = readFileSync(new URL('../src-tauri/Cargo.toml', import.meta.url), 'utf8');
 assert.equal(cargo.match(/\[package\][\s\S]*?^version = "([^"]+)"/m)?.[1], version);
 const lock = readFileSync(new URL('../src-tauri/Cargo.lock', import.meta.url), 'utf8');

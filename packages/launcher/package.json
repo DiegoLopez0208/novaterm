@@ -1,0 +1,51 @@
+{
+  "name": "novaterm",
+  "version": "0.1.1",
+  "description": "NovaTerm desktop terminal for Windows x64 — launch with npx novaterm",
+  "type": "module",
+  "bin": {
+    "novaterm": "bin/novaterm.mjs"
+  },
+  "files": [
+    "bin/",
+    "native/",
+    "licenses/",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "prepublishOnly": "node bin/novaterm.mjs --doctor"
+  },
+  "license": "MIT",
+  "author": "DiegoLopez0208",
+  "homepage": "https://github.com/DiegoLopez0208/novaterm#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DiegoLopez0208/novaterm.git",
+    "directory": "packages/launcher"
+  },
+  "bugs": {
+    "url": "https://github.com/DiegoLopez0208/novaterm/issues"
+  },
+  "keywords": [
+    "terminal",
+    "windows",
+    "powershell",
+    "claude-code",
+    "tauri",
+    "novaterm"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  }
+}

@@ -11,6 +11,9 @@ node_modules
 dist
 dist-ssr
 benchmark-results/
+packages/launcher/native/
+packages/launcher/licenses/
+packages/launcher/*.tgz
 test-results/
 playwright-report/
 *.local

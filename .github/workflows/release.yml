@@ -34,6 +34,7 @@ jobs:
       - run: npm run lint -- --deny-warnings
       - run: npm test
       - run: npm --prefix packages/plugin-sdk test
+      - run: npm --prefix packages/launcher test
       - run: npm run build
       - run: cargo test --manifest-path src-tauri/Cargo.toml --lib --locked
       - run: npm run tauri -- build --bundles nsis,msi
