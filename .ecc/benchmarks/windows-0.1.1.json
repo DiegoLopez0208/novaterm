@@ -1,0 +1,465 @@
+{
+  "capturedUtc": "2026-10-06T23:16:16.847Z",
+  "sourceCommit": "fc261ca4c7bff729f9171b482079a7e88974f2c7",
+  "version": "0.1.1",
+  "executableSha256": "9160fafd171dd608e227a33fd3e770d746f961ae4940030e7c847bfde7ebde7c",
+  "os": "Microsoft Windows [Versión 10.0.26200.9457]",
+  "settings": {
+    "window": {
+      "opacity": 0.54,
+      "blur": true,
+      "padding": 10,
+      "decorations": false
+    },
+    "font": {
+      "family": "JetBrainsMono Nerd Font, JetBrains Mono, Consolas, monospace",
+      "size": 13,
+      "line_height": 1.2,
+      "letter_spacing": 1.5,
+      "ligatures": true
+    },
+    "terminal": {
+      "scrollback": 10000,
+      "smooth_scroll_ms": 120,
+      "copy_on_select": false,
+      "gpu": true
+    },
+    "ui": {
+      "tab_bar": true,
+      "status_bar": true,
+      "animations": true,
+      "welcome": true
+    },
+    "shell": "Default PowerShell profile",
+    "plugins": [
+      {
+        "id": "example-command-snippets",
+        "version": "0.1.0",
+        "widgets": 0
+      },
+      {
+        "id": "example-git-branch",
+        "version": "0.1.0",
+        "widgets": 1
+      },
+      {
+        "id": "example-git-changes",
+        "version": "0.1.0",
+        "widgets": 1
+      },
+      {
+        "id": "example-json-tools",
+        "version": "0.1.0",
+        "widgets": 0
+      },
+      {
+        "id": "example-output-explainer",
+        "version": "0.1.0",
+        "widgets": 0
+      },
+      {
+        "id": "example-output-inspector",
+        "version": "0.1.0",
+        "widgets": 0
+      },
+      {
+        "id": "example-timestamp-tools",
+        "version": "0.1.0",
+        "widgets": 0
+      },
+      {
+        "id": "git-status",
+        "version": "1.0.0",
+        "widgets": 1
+      }
+    ]
+  },
+  "startup": [
+    {
+      "repetition": 1,
+      "observedWindowAndTerminalMs": 1423
+    },
+    {
+      "repetition": 2,
+      "observedWindowAndTerminalMs": 1895
+    },
+    {
+      "repetition": 3,
+      "observedWindowAndTerminalMs": 1467
+    },
+    {
+      "repetition": 4,
+      "observedWindowAndTerminalMs": 1494
+    }
+  ],
+  "runs": [
+    {
+      "scenario": "idle-1",
+      "group": "app",
+      "seconds": 20.6460997,
+      "samples": 17,
+      "focusedAtStart": true,
+      "medianCpuMachinePercent": 0.08333333333333333,
+      "p95CpuMachinePercent": 0.5,
+      "medianPrivateMiB": 203.41015625,
+      "peakPrivateMiB": 248.40234375,
+      "firstPrivateMiB": 248.40234375,
+      "lastPrivateMiB": 203.41015625,
+      "rawDirectory": "samples\\20261006-200729-093-26284",
+      "webView2": {
+        "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\154.0.4258.62\\msedgewebview2.exe": "154.0.4258.62"
+      }
+    },
+    {
+      "scenario": "idle-1",
+      "group": "workload",
+      "seconds": 20.6460997,
+      "samples": 17,
+      "focusedAtStart": true,
+      "medianCpuMachinePercent": 0,
+      "p95CpuMachinePercent": 0,
+      "medianPrivateMiB": 63.00390625,
+      "peakPrivateMiB": 64.49609375,
+      "firstPrivateMiB": 63.00390625,
+      "lastPrivateMiB": 62.6484375,
+      "rawDirectory": "samples\\20261006-200729-093-26284",
+      "webView2": {
+        "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\154.0.4258.62\\msedgewebview2.exe": "154.0.4258.62"
+      }
+    },
+    {
+      "scenario": "sustained-output-1",
+      "group": "app",
+      "seconds": 20.568464799999997,
+      "samples": 14,
+      "focusedAtStart": true,
+      "medianCpuMachinePercent": 6.916666666666667,
+      "p95CpuMachinePercent": 9.083333333333334,
+      "medianPrivateMiB": 303.4140625,
+      "peakPrivateMiB": 327.2265625,
+      "firstPrivateMiB": 249.953125,
+      "lastPrivateMiB": 327.2265625,
+      "rawDirectory": "samples\\20261006-200750-548-26284",
+      "webView2": {
+        "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\154.0.4258.62\\msedgewebview2.exe": "154.0.4258.62"
+      },
+      "bytesReceived": 34211090
+    },
+    {
+      "scenario": "sustained-output-1",
+      "group": "workload",
+      "seconds": 20.568464799999997,
+      "samples": 14,
+      "focusedAtStart": true,
+      "medianCpuMachinePercent": 2.5,
+      "p95CpuMachinePercent": 3.0833333333333335,
+      "medianPrivateMiB": 63.71484375,
+      "peakPrivateMiB": 66.53515625,
+      "firstPrivateMiB": 66.53515625,
+      "lastPrivateMiB": 63.63671875,
+      "rawDirectory": "samples\\20261006-200750-548-26284",
+      "webView2": {
+        "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\154.0.4258.62\\msedgewebview2.exe": "154.0.4258.62"
+      }
+    },
+    {
+      "scenario": "idle-2",
+      "group": "app",
+      "seconds": 20.764147899999998,
+      "samples": 17,
+      "focusedAtStart": true,
+      "medianCpuMachinePercent": 0.16666666666666666,
+      "p95CpuMachinePercent": 0.5,
+      "medianPrivateMiB": 206.921875,
+      "peakPrivateMiB": 246.90234375,
+      "firstPrivateMiB": 246.90234375,
+      "lastPrivateMiB": 207.0625,
+      "rawDirectory": "samples\\20261006-200829-614-21712",
+      "webView2": {
+        "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\154.0.4258.62\\msedgewebview2.exe": "154.0.4258.62"
+      }
+    },
+    {
+      "scenario": "idle-2",
+      "group": "workload",
+      "seconds": 20.764147899999998,
+      "samples": 17,
+      "focusedAtStart": true,
+      "medianCpuMachinePercent": 0,
+      "p95CpuMachinePercent": 0.08333333333333333,
+      "medianPrivateMiB": 62.953125,
+      "peakPrivateMiB": 62.98046875,
+      "firstPrivateMiB": 62.890625,
+      "lastPrivateMiB": 62.421875,
+      "rawDirectory": "samples\\20261006-200829-614-21712",
+      "webView2": {
+        "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\154.0.4258.62\\msedgewebview2.exe": "154.0.4258.62"
+      }
+    },
+    {
+      "scenario": "sustained-output-2",
+      "group": "app",
+      "seconds": 20.0853741,
+      "samples": 16,
+      "focusedAtStart": true,
+      "medianCpuMachinePercent": 6.5,
+      "p95CpuMachinePercent": 10,
+      "medianPrivateMiB": 311.44921875,
+      "peakPrivateMiB": 357.33984375,
+      "firstPrivateMiB": 256.40625,
+      "lastPrivateMiB": 357.33984375,
+      "rawDirectory": "samples\\20261006-200851-237-21712",
+      "webView2": {
+        "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\154.0.4258.62\\msedgewebview2.exe": "154.0.4258.62"
+      },
+      "bytesReceived": 42673291
+    },
+    {
+      "scenario": "sustained-output-2",
+      "group": "workload",
+      "seconds": 20.0853741,
+      "samples": 16,
+      "focusedAtStart": true,
+      "medianCpuMachinePercent": 2.25,
+      "p95CpuMachinePercent": 3.0833333333333335,
+      "medianPrivateMiB": 69.765625,
+      "peakPrivateMiB": 73.13671875,
+      "firstPrivateMiB": 66.390625,
+      "lastPrivateMiB": 69.7734375,
+      "rawDirectory": "samples\\20261006-200851-237-21712",
+      "webView2": {
+        "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\154.0.4258.62\\msedgewebview2.exe": "154.0.4258.62"
+      }
+    },
+    {
+      "scenario": "idle-3",
+      "group": "app",
+      "seconds": 20.524976499999998,
+      "samples": 17,
+      "focusedAtStart": true,
+      "medianCpuMachinePercent": 0.08333333333333333,
+      "p95CpuMachinePercent": 0.3333333333333333,
+      "medianPrivateMiB": 205.6875,
+      "peakPrivateMiB": 252.1015625,
+      "firstPrivateMiB": 252.1015625,
+      "lastPrivateMiB": 205.6875,
+      "rawDirectory": "samples\\20261006-200928-904-32720",
+      "webView2": {
+        "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\154.0.4258.62\\msedgewebview2.exe": "154.0.4258.62"
+      }
+    },
+    {
+      "scenario": "idle-3",
+      "group": "workload",
+      "seconds": 20.524976499999998,
+      "samples": 17,
+      "focusedAtStart": true,
+      "medianCpuMachinePercent": 0,
+      "p95CpuMachinePercent": 0.08333333333333333,
+      "medianPrivateMiB": 63.10546875,
+      "peakPrivateMiB": 63.15234375,
+      "firstPrivateMiB": 63.10546875,
+      "lastPrivateMiB": 62.7890625,
+      "rawDirectory": "samples\\20261006-200928-904-32720",
+      "webView2": {
+        "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\154.0.4258.62\\msedgewebview2.exe": "154.0.4258.62"
+      }
+    },
+    {
+      "scenario": "sustained-output-3",
+      "group": "app",
+      "seconds": 20.0978282,
+      "samples": 16,
+      "focusedAtStart": true,
+      "medianCpuMachinePercent": 6.083333333333333,
+      "p95CpuMachinePercent": 7.333333333333333,
+      "medianPrivateMiB": 307.640625,
+      "peakPrivateMiB": 354.28125,
+      "firstPrivateMiB": 254.23828125,
+      "lastPrivateMiB": 354.28125,
+      "rawDirectory": "samples\\20261006-200950-257-32720",
+      "webView2": {
+        "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\154.0.4258.62\\msedgewebview2.exe": "154.0.4258.62"
+      },
+      "bytesReceived": 42739067
+    },
+    {
+      "scenario": "sustained-output-3",
+      "group": "workload",
+      "seconds": 20.0978282,
+      "samples": 16,
+      "focusedAtStart": true,
+      "medianCpuMachinePercent": 2,
+      "p95CpuMachinePercent": 2.9166666666666665,
+      "medianPrivateMiB": 69.92578125,
+      "peakPrivateMiB": 69.9609375,
+      "firstPrivateMiB": 66.6328125,
+      "lastPrivateMiB": 69.9609375,
+      "rawDirectory": "samples\\20261006-200950-257-32720",
+      "webView2": {
+        "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\154.0.4258.62\\msedgewebview2.exe": "154.0.4258.62"
+      }
+    },
+    {
+      "scenario": "ten-tabs",
+      "group": "app",
+      "seconds": 20.8318729,
+      "samples": 17,
+      "focusedAtStart": true,
+      "medianCpuMachinePercent": 0.08333333333333333,
+      "p95CpuMachinePercent": 0.5833333333333334,
+      "medianPrivateMiB": 295.2578125,
+      "peakPrivateMiB": 387.09375,
+      "firstPrivateMiB": 387.09375,
+      "lastPrivateMiB": 295.265625,
+      "rawDirectory": "samples\\20261006-201029-843-8052",
+      "webView2": {
+        "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\154.0.4258.62\\msedgewebview2.exe": "154.0.4258.62"
+      }
+    },
+    {
+      "scenario": "ten-tabs",
+      "group": "workload",
+      "seconds": 20.8318729,
+      "samples": 17,
+      "focusedAtStart": true,
+      "medianCpuMachinePercent": 0,
+      "p95CpuMachinePercent": 1.1666666666666667,
+      "medianPrivateMiB": 576.8125,
+      "peakPrivateMiB": 577.30859375,
+      "firstPrivateMiB": 577.171875,
+      "lastPrivateMiB": 572.484375,
+      "rawDirectory": "samples\\20261006-201029-843-8052",
+      "webView2": {
+        "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\154.0.4258.62\\msedgewebview2.exe": "154.0.4258.62"
+      }
+    },
+    {
+      "scenario": "four-panes",
+      "group": "app",
+      "seconds": 20.639108,
+      "samples": 17,
+      "focusedAtStart": true,
+      "medianCpuMachinePercent": 0,
+      "p95CpuMachinePercent": 0.8333333333333334,
+      "medianPrivateMiB": 299.33203125,
+      "peakPrivateMiB": 339.69921875,
+      "firstPrivateMiB": 339.69921875,
+      "lastPrivateMiB": 238.19921875,
+      "rawDirectory": "samples\\20261006-201052-034-8052",
+      "webView2": {
+        "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\154.0.4258.62\\msedgewebview2.exe": "154.0.4258.62"
+      }
+    },
+    {
+      "scenario": "four-panes",
+      "group": "workload",
+      "seconds": 20.639108,
+      "samples": 17,
+      "focusedAtStart": true,
+      "medianCpuMachinePercent": 0,
+      "p95CpuMachinePercent": 0.25,
+      "medianPrivateMiB": 226.44140625,
+      "peakPrivateMiB": 227.06640625,
+      "firstPrivateMiB": 227.06640625,
+      "lastPrivateMiB": 226.2109375,
+      "rawDirectory": "samples\\20261006-201052-034-8052",
+      "webView2": {
+        "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\154.0.4258.62\\msedgewebview2.exe": "154.0.4258.62"
+      }
+    },
+    {
+      "scenario": "post-cycles-soak",
+      "group": "app",
+      "seconds": 300.29697239999996,
+      "samples": 245,
+      "focusedAtStart": true,
+      "medianCpuMachinePercent": 0.08333333333333333,
+      "p95CpuMachinePercent": 0.5,
+      "medianPrivateMiB": 223.890625,
+      "peakPrivateMiB": 448.484375,
+      "firstPrivateMiB": 448.484375,
+      "lastPrivateMiB": 222.859375,
+      "rawDirectory": "samples\\20261006-201115-911-8052",
+      "webView2": {
+        "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\154.0.4258.62\\msedgewebview2.exe": "154.0.4258.62"
+      }
+    },
+    {
+      "scenario": "post-cycles-soak",
+      "group": "workload",
+      "seconds": 300.29697239999996,
+      "samples": 245,
+      "focusedAtStart": true,
+      "medianCpuMachinePercent": 0,
+      "p95CpuMachinePercent": 0,
+      "medianPrivateMiB": 61.21875,
+      "peakPrivateMiB": 64.54296875,
+      "firstPrivateMiB": 61.890625,
+      "lastPrivateMiB": 61.3203125,
+      "rawDirectory": "samples\\20261006-201115-911-8052",
+      "webView2": {
+        "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\154.0.4258.62\\msedgewebview2.exe": "154.0.4258.62"
+      }
+    }
+  ],
+  "checks": [
+    {
+      "name": "ansi-output-1",
+      "passed": true
+    },
+    {
+      "name": "clean-app-close",
+      "passed": true
+    },
+    {
+      "name": "ansi-output-2",
+      "passed": true
+    },
+    {
+      "name": "clean-app-close",
+      "passed": true
+    },
+    {
+      "name": "ansi-output-3",
+      "passed": true
+    },
+    {
+      "name": "clean-app-close",
+      "passed": true
+    },
+    {
+      "name": "twenty-tab-open-close-cycles",
+      "passed": true
+    },
+    {
+      "name": "shell-responsive-after-soak",
+      "passed": true
+    },
+    {
+      "name": "clean-app-close",
+      "passed": true
+    }
+  ],
+  "rawRoot": "C:\\Users\\Diego\\dev\\novaterm\\benchmark-results\\release-1791328041512",
+  "limitations": [
+    "Current-version baseline only; no before/after savings claim.",
+    "Startup includes CDP connection and observation overhead; OS caches were not flushed.",
+    "Loopback CDP, bounded output instrumentation and resource sampling add overhead.",
+    "App totals include WebView2; workload totals include shells and widget subprocesses.",
+    "Five-minute soak is not a full working-day endurance test.",
+    "Private bytes are committed private memory, not physical RAM; summed working sets can double-count shared pages."
+  ],
+  "hardware": {
+    "cpu": "AMD Ryzen 5 5600H with Radeon Graphics",
+    "logicalProcessors": 12,
+    "gpu": [
+      "AMD Radeon(TM) Graphics",
+      "NVIDIA GeForce RTX 3060 Laptop GPU"
+    ],
+    "os": "Microsoft Windows 11 Home Single Language",
+    "build": "26200"
+  },
+  "runtimeSourceCommit": "f0911bfc1dd90c530722c26c3710d2ca094f191a",
+  "sourceNote": "The benchmark began with the release changes in the working tree, then those same runtime sources were committed as f0911bf. Later changes rename the private frontend package and add reports; they do not alter emitted application assets. Raw metadata retains per-scenario revisions and dirty state."
+}

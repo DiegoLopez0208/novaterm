@@ -8,7 +8,7 @@ no Rust compilation or binary download script runs during installation.
 - New geometric branding and a compact terminal welcome with an optional brief fade.
 - Smooth history scrolling that respects reduced motion and inactive panes.
 - Installed plugin library, explicit permission review and sandboxed panels.
-- Seven example plugins, including JSON tools, timestamp tools and reviewed command snippets.
+- Seven example plugins in the repository, including JSON tools, timestamp tools and reviewed command snippets.
 - Bounded PTY output and widget execution, serialized input and resize handling.
 - MIT application and SDK; bundled font licenses are included.
 
@@ -20,7 +20,11 @@ install/uninstall cycle was not exercised on this non-administrator account.
 The public npm package was downloaded separately, its executable verified and
 its launcher and native application exercised.
 
-See `docs/RESOURCE-BENCHMARK.md` for the measured Windows baseline and its limits.
+The measured baseline starts in 1.48 seconds; app and WebView2 private memory
+is 205.7 MiB at idle (shells measured separately). Three output runs, ten tabs,
+four panes and a five-minute soak after twenty tab cycles completed successfully.
+See [the resource report](https://github.com/DiegoLopez0208/novaterm/blob/master/docs/RESOURCE-BENCHMARK.md)
+for the method, full results and limitations.
 The public plugin registry is not deployed yet. Linux, macOS and ARM64 binaries,
 automatic desktop updates and code signing are not included. Windows may display
 an unknown-publisher warning for these unsigned executables.

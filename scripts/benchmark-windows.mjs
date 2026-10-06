@@ -218,19 +218,19 @@ try {
   app.finalErrors = await app.page.evaluate(() => window.__NOVA_BENCH__.errors);
   await close(app); app = null;
   assert.ok(checks.every((c) => c.passed), 'All compatibility checks passed');
-  const result = { capturedUtc: new Date().toISOString(), sourceCommit: revision,
+    const result = { capturedUtc: new Date().toISOString(), sourceCommit: revision,
     version: JSON.parse(readFileSync('package.json', 'utf8')).version,
     executableSha256: createHash('sha256').update(readFileSync(executable)).digest('hex'),
     os: execFileSync('cmd.exe', ['/c', 'ver'], { encoding: 'utf8' }).trim(), settings,
-    startup, runs, checks, rawRoot: root,
+    startup, runs, checks, rawRoot: root, sampleWindowSeconds: duration, soakSeconds: soak,
     limitations: ['Current-version baseline only; no before/after savings claim.',
       'Startup includes CDP connection and observation overhead; OS caches were not flushed.',
       'Loopback CDP, bounded output instrumentation and resource sampling add overhead.',
       'App totals include WebView2; workload totals include shells and widget subprocesses.',
-      'Five-minute soak is not a full working-day endurance test.',
+      `${soak}-second soak is not a full working-day endurance test.`,
       'Private bytes are committed private memory, not physical RAM; summed working sets can double-count shared pages.'] };
   mkdirSync('.ecc/benchmarks', { recursive: true });
-  writeFileSync('.ecc/benchmarks/windows-0.1.1.json', JSON.stringify(result, null, 2) + '\n');
+  writeFileSync(`.ecc/benchmarks/windows-${result.version}.json`, JSON.stringify(result, null, 2) + '\n');
   writeFileSync(join(root, 'summary.json'), JSON.stringify(result, null, 2) + '\n');
   console.log(`Benchmark complete: ${root}`);
 } finally {
