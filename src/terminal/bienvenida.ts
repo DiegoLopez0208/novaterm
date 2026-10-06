@@ -59,7 +59,7 @@ export function construirBienvenida(info: InfoSistema, config: NovaConfig, colum
   const anchoDatos = disponible - (conMarca ? ANCHO_MARCA + 4 : 0)
   const campo = (clave: string, valor: string) => {
     const etiqueta = ajustar(clave.padEnd(8), anchoDatos)
-    return `${TENUE}${etiqueta}${TINTA}${ajustar(valor, anchoDatos - etiqueta.length)}${RESET}`
+    return `${ACENTO}${etiqueta}${TINTA}${ajustar(valor, anchoDatos - etiqueta.length)}${RESET}`
   }
   const datos = [
     `${NEGRITA}${BLANCO}${ajustar('NovaTerm', anchoDatos)}${RESET}${ACENTO}${ajustar(`  v${info.novaterm}`, Math.max(0, anchoDatos - 8))}${RESET}`,
