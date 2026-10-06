@@ -147,6 +147,11 @@ export function TerminalView({
   const webglRef = useRef<WebglAddon | null>(null)
   const [busqueda, setBusqueda] = useState(false)
   const motionEnabled = useMotionEnabled(config.ui.animations, activo)
+  const motionEnabledRef = useRef(motionEnabled)
+  motionEnabledRef.current = motionEnabled
+  useEffect(() => {
+    if (!motionEnabled) hostRef.current?.classList.remove('terminal-welcome-enter')
+  }, [motionEnabled])
   const scrollDuration = smoothScrollDuration(config.terminal.smooth_scroll_ms, motionEnabled)
   const scrollDurationRef = useRef(scrollDuration)
   scrollDurationRef.current = scrollDuration
@@ -250,7 +255,11 @@ export function TerminalView({
       if (!inicial.ui.welcome) return
       try {
         const info = await invoke<InfoSistema>('system_info')
-        if (!disposed) term.write(construirBienvenida(info, inicial, term.cols))
+        if (!disposed) term.write(construirBienvenida(info, inicial, term.cols), () => {
+          // Animate the rendered surface once; never delay the PTY or rewrite
+          // lines after the shell has started producing output.
+          if (!disposed && motionEnabledRef.current) host.classList.add('terminal-welcome-enter')
+        })
       } catch {
         // Sin datos del sistema no hay bienvenida, y no es motivo para que la
         // terminal no abra.
@@ -445,6 +454,9 @@ export function TerminalView({
     <>
       <div
         className="terminal-host"
+        onAnimationEnd={(event) => {
+          if (event.target === event.currentTarget) event.currentTarget.classList.remove('terminal-welcome-enter')
+        }}
         ref={hostRef}
         onMouseDown={() => termRef.current?.focus()}
         onContextMenu={(e) => {
