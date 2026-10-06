@@ -10,14 +10,14 @@ const installed = [
   { id: 'example-command-snippets', name: 'Command snippets', description: 'Insert reviewed commands.', permissions: ['ui.panel', 'terminal.write'] },
 ].map((plugin) => ({ ...plugin, version: '0.1.0', widgets: [], profiles: [], commands: [], entry: 'index.js', carpeta: '' }))
 
-async function boot(page: Page, options: { denied?: boolean; offline?: boolean } = {}) {
+async function boot(page: Page, options: { denied?: boolean; offline?: boolean; welcome?: boolean } = {}) {
   await page.addInitScript(({ plugins, sources, options }) => {
     const normal = { black: '#161821', red: '#e27878', green: '#b4be82', yellow: '#e2a478', blue: '#84a0c6', magenta: '#a093c7', cyan: '#89b8c2', white: '#c6c8d1' }
     const config = {
       window: { opacity: 1, blur: false, padding: 12, decorations: false },
       font: { family: 'Nova Mono', size: 14, line_height: 1.1, letter_spacing: 0, ligatures: false },
       cursor: { style: 'bar', blink: false }, terminal: { scrollback: 5000, smooth_scroll_ms: 120, copy_on_select: false, gpu: false },
-      shell: { default_profile: null }, ui: { tab_bar: true, status_bar: true, animations: true, welcome: false },
+      shell: { default_profile: null }, ui: { tab_bar: true, status_bar: true, animations: true, welcome: options.welcome ?? false },
       colors: { background: '#0d0f18', foreground: '#d8dee9', cursor: '#ffffff', selection: '#2b3245', normal, bright: { ...normal, black: '#6b7089' } },
       profiles: [], llm: { provider: 'deepseek', model: '', tokens_por_dia: 200000 },
       plugins: { concedidos: options.denied ? {} : Object.fromEntries(plugins.map((plugin) => [plugin.id, plugin.permissions])), de_confianza: [], registro: 'http://127.0.0.1:8787' },
@@ -54,14 +54,56 @@ async function boot(page: Page, options: { denied?: boolean; offline?: boolean }
         if (command === 'pty_spawn') return args.id
         if (command === 'plugin:window|is_focused') return true
         if (command === 'system_stats') return { cpu: 0, ram_usada: 0, ram_total: 16 * 1024 ** 3 }
+        if (command === 'system_info') return {
+          host: 'DESKTOP-0S1L1U4', usuario: 'Diego', so: 'Windows 11', version: '(26200)',
+          cpu: 'AMD Ryzen 5 5600H with Radeon Graphics', nucleos: 12,
+          gpu: 'NVIDIA GeForce RTX 3060 Laptop GPU', ram_total: 13.9 * 1024 ** 3,
+          uptime: 140400, novaterm: '0.1.0',
+        }
         return null
       },
     }
   }, { plugins: installed, sources: entries, options })
   await page.goto('/')
+  if (options.welcome) return
   await page.getByRole('button', { name: 'Plugins', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Plugin library' })).toBeVisible()
 }
+
+test('welcome finishes its entrance once without postponing shell startup', async ({ page }) => {
+  await page.addInitScript(() => {
+    const events: string[] = []
+    ;(window as unknown as { __WELCOME_ANIMATIONS__: string[] }).__WELCOME_ANIMATIONS__ = events
+    document.addEventListener('animationstart', (event) => {
+      if (event.animationName === 'terminal-welcome-enter') events.push(event.animationName)
+    })
+  })
+  await boot(page, { welcome: true })
+  await expect.poll(() => page.evaluate(() =>
+    (window as unknown as { __TEST_CALLS__: { command: string }[] }).__TEST_CALLS__.some((call) => call.command === 'pty_spawn'),
+  )).toBe(true)
+  await expect.poll(() => page.evaluate(() =>
+    (window as unknown as { __WELCOME_ANIMATIONS__: string[] }).__WELCOME_ANIMATIONS__.length,
+  )).toBe(1)
+  await expect(page.locator('.terminal-host')).not.toHaveClass(/terminal-welcome-enter/)
+  await page.screenshot({ path: 'test-results/welcome.png' })
+  await page.getByRole('button', { name: 'Plugins', exact: true }).click()
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.terminal-host')).not.toHaveClass(/terminal-welcome-enter/)
+  expect(await page.evaluate(() =>
+    (window as unknown as { __WELCOME_ANIMATIONS__: string[] }).__WELCOME_ANIMATIONS__.length,
+  )).toBe(1)
+})
+
+test('welcome respects reduced motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await boot(page, { welcome: true })
+  await expect.poll(() => page.evaluate(() =>
+    (window as unknown as { __TEST_CALLS__: { command: string }[] }).__TEST_CALLS__.some((call) => call.command === 'pty_spawn'),
+  )).toBe(true)
+  await expect(page.locator('.terminal-host')).not.toHaveClass(/terminal-welcome-enter/)
+  await expect(page.locator('.terminal-host')).toHaveCSS('animation-name', 'none')
+})
 
 test('installed library filters locally, opens a real sandbox and formats JSON', async ({ page }) => {
   await boot(page, { offline: true })

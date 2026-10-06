@@ -57,9 +57,9 @@ describe('bienvenida', () => {
     const salida = construirBienvenida(info, config, 120)
 
     expect(salida).toContain('█')
-    // La primera fila de la marca y el titulo comparten linea.
+    // The product title and mark share the first row.
     const conMarca = salida.split('\r\n').filter((l) => l.includes('█'))
-    expect(conMarca[0]).toContain('diego')
+    expect(conMarca[0]).toContain('NovaTerm')
   })
 
   /// Un panel angosto (una ventana partida en cuatro) no tiene que escupir un
@@ -83,6 +83,21 @@ describe('bienvenida', () => {
     const salida = construirBienvenida({ ...info, gpu: null }, config, 120)
 
     expect(salida).not.toContain('GPU')
+  })
+
+  it('fits long hardware names and very small split panes', () => {
+    const largo = { ...info, host: 'DESKTOP-0S1L1U4', cpu: 'AMD Ryzen 5 5600H with Radeon Graphics'.repeat(3) }
+    for (const columnas of [1, 10, 25, 50, 74, 100]) {
+      for (const linea of construirBienvenida(largo, config, columnas).split('\r\n')) {
+        expect(anchoVisible(linea)).toBeLessThanOrEqual(columnas)
+      }
+    }
+  })
+
+  it('does not let system strings inject extra lines or terminal commands', () => {
+    const salida = construirBienvenida({ ...info, host: 'host\r\ninjected\x1b[2J' }, config, 120)
+    expect(salida).not.toContain('\r\ninjected')
+    expect(salida).not.toContain('\x1b[2J')
   })
 
   /// El texto ya impreso no se puede "recolorear": si los codigos llevaran el

@@ -454,6 +454,15 @@ body.redimensionando * {
   user-select: none;
 }
 
+@keyframes terminal-welcome-enter {
+  from { opacity: 0.35; }
+  to { opacity: 1; }
+}
+
+.terminal-host.terminal-welcome-enter {
+  animation: terminal-welcome-enter 420ms ease-out;
+}
+
 .terminal-host {
   width: 100%;
   height: 100%;
