@@ -3,7 +3,8 @@
 The application and SDK share a version. Update `package.json`, root
 `package-lock.json` (including `packages[""]`), `src-tauri/Cargo.toml`, the `app`
 entry in `src-tauri/Cargo.lock`, `src-tauri/tauri.conf.json` and
-`packages/plugin-sdk/package.json` together. Run `node scripts/check-version.mjs`.
+`packages/plugin-sdk/package.json` and `packages/launcher/package.json` together.
+Use `node scripts/bump-version.mjs <version>`, then `node scripts/check-version.mjs`.
 
 ## Windows desktop
 
@@ -12,7 +13,8 @@ entry in `src-tauri/Cargo.lock`, `src-tauri/tauri.conf.json` and
 3. Create a `v<version>` tag on the reviewed commit and push that tag.
 4. The Windows workflow runs tests and builds NSIS and MSI installers. Only
    after success does it create a **draft** release and upload both installers
-   plus SHA-256 checksums. No automatic publication or updater is configured.
+   plus a portable ZIP, the bundled npm launcher archive and SHA-256 checksums.
+   No automatic publication or updater is configured.
 5. Test both installers on Windows and use the checklist below. Review the draft
    notes and publish the release through GitHub when acceptance passes.
 
@@ -40,6 +42,27 @@ For a local artifact check without contacting GitHub, run
 installers. It rejects mismatched versions and creates `SHA256SUMS.txt`.
 App and bundled font license notices are included in the installers.
 
+## Desktop npm launcher
+
+`packages/launcher` publishes as `novaterm`, with a Windows x64 executable,
+integrity manifest, MIT license and font notices. The application source's root
+`package.json` stays private. The launcher and application share a version.
+
+After the reviewed release build, run:
+
+```sh
+node scripts/prepare-launcher.mjs
+npm --prefix packages/launcher test
+node packages/launcher/bin/novaterm.mjs --doctor
+```
+
+`node scripts/draft-release.mjs v<version> --prepare-only` packages the launcher
+and portable ZIP alongside both installers and generates checksums for all four
+artifacts. Test the packed tarball from a fresh npm prefix, including launching
+the native application. Publish that reviewed tarball with `npm publish <tgz>`;
+do not publish the private frontend project. No automatic npm publication of the
+desktop launcher is configured yet.
+
 ## Plugin SDK package
 
 The SDK is public on npm as `@diegolopez02081/novaterm-plugin-sdk`, starting at
@@ -53,7 +76,7 @@ npm install @diegolopez02081/novaterm-plugin-sdk
 Publishing a release triggers `packages.yml`, which checks out its tag, validates
 versions, tests the SDK, skips versions already available on npm, and publishes
 new versions using OIDC. A package version cannot be republished. The desktop
-npm project remains private. SDK contents are limited to its module, types,
+frontend npm project remains private. SDK contents are limited to its module, types,
 manifest, README and MIT license; there are no runtime dependencies.
 
 **One-time account setup is still required before automatic publication of a new

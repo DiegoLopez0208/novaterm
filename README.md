@@ -6,10 +6,35 @@ A desktop terminal built with **Tauri 2, Rust, React, and xterm.js**. Run native
 shells, organize tabs and split panes, customize colors and fonts, manage SSH
 profiles, and extend the application with plugins.
 
-Windows is covered by native CI. Linux and macOS support is being validated;
-cross-platform installers are not yet published. Windows installers are prepared
-through the [release workflow](docs/RELEASING.md). The plugin SDK is
-[available on npm](https://www.npmjs.com/package/@diegolopez02081/novaterm-plugin-sdk).
+Windows x64 is covered by native CI. Linux, macOS and ARM64 installers are not
+included in this release.
+
+## Install on Windows
+
+Download the setup installer from [GitHub Releases](https://github.com/DiegoLopez0208/novaterm/releases/latest).
+The setup adds a Start menu shortcut and an uninstaller. A portable ZIP is also
+available. The executables are currently unsigned.
+
+With Node.js 20+ installed, you can launch the bundled native app directly:
+
+```sh
+npx novaterm
+```
+
+Or install the launcher globally:
+
+```sh
+npm install --global novaterm
+novaterm C:/projects/my-project
+```
+
+The npm package includes the Windows x64 executable; it does not compile Rust
+or run a binary download during installation. Microsoft Edge WebView2 Runtime
+is required; the setup installer can install it if missing. `novaterm --doctor`
+checks the npm executable's integrity. See [release instructions](docs/RELEASING.md)
+and [measured resource results](docs/RESOURCE-BENCHMARK.md).
+
+The plugin SDK is [available separately on npm](https://www.npmjs.com/package/@diegolopez02081/novaterm-plugin-sdk).
 
 ## Features
 

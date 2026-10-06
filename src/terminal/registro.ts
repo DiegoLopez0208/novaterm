@@ -17,15 +17,27 @@ interface Viva {
 }
 
 const vivas = new Map<string, Viva>()
+declare global {
+  interface Window {
+    /** Opt-in local diagnostics, enabled only by the native benchmark harness. */
+    __NOVATERM_DIAGNOSTICS__?: boolean
+  }
+}
 /// Cual es el panel que tiene el foco. Un plugin siempre habla con este.
 let activo: string | null = null
 
 export function registrar(panelId: string, viva: Viva): void {
   vivas.set(panelId, viva)
+  if (window.__NOVATERM_DIAGNOSTICS__) {
+    window.dispatchEvent(new CustomEvent('novaterm:terminal-ready', { detail: { panelId, ...viva } }))
+  }
 }
 
 export function olvidar(panelId: string): void {
   vivas.delete(panelId)
+  if (window.__NOVATERM_DIAGNOSTICS__) {
+    window.dispatchEvent(new CustomEvent('novaterm:terminal-closed', { detail: { panelId } }))
+  }
   if (activo === panelId) activo = null
 }
 
